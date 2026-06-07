@@ -275,7 +275,7 @@ function renderDealerHand(room) {
 
     dealerCards.innerHTML = '';
     room.dealerHand.forEach(card => {
-        dealerCards.appendChild(createCardElement(card));
+        dealerCards.appendChild(createCardElement(card, 'dealer'));
     });
     
     if (room.dealerHand.length > 0) {
@@ -315,13 +315,14 @@ function renderPlayerSlots(room) {
             cardEl.querySelector('.player-name').innerText = p.name + (p.id === myId ? ' (Tu)' : '');
             cardEl.querySelector('.player-chips').innerText = `$${p.chips}`;
             
-            // Bet Display
-            const betEl = cardEl.querySelector('.player-bet-badge');
+            // Bet Display (3D Stacked Chips)
+            const betArea = cardEl.querySelector('.player-bet-area');
             if (p.bet > 0) {
-                betEl.style.display = 'block';
-                betEl.innerText = `Bet: $${p.bet}`;
+                betArea.style.display = 'flex';
+                betArea.querySelector('.bet-value-badge').innerText = `$${p.bet}`;
+                betArea.querySelector('.chip-stack-container').innerHTML = getChipStackHTML(p.bet);
             } else {
-                betEl.style.display = 'none';
+                betArea.style.display = 'none';
             }
 
             // Sound check for dealt cards
@@ -336,7 +337,7 @@ function renderPlayerSlots(room) {
             const handLayout = cardEl.querySelector('.cards-layout');
             handLayout.innerHTML = '';
             p.hand.forEach(card => {
-                handLayout.appendChild(createCardElement(card));
+                handLayout.appendChild(createCardElement(card, 'player', s));
             });
 
             // Timer bar rendering
@@ -470,23 +471,81 @@ function updateControlsVisibility(room) {
     }
 }
 
+// Chip Stacking Calculator Helper
+function getChipStackHTML(amount) {
+    let remaining = amount;
+    const chipValues = [500, 100, 50, 25, 10];
+    const chipsToRender = [];
+    
+    for (const val of chipValues) {
+        while (remaining >= val) {
+            chipsToRender.push(val);
+            remaining -= val;
+        }
+    }
+    
+    // Render up to 8 chips in vertical offset
+    let html = '<div class="chip-stack relative w-12 h-14 flex items-end justify-center">';
+    chipsToRender.slice(0, 8).forEach((val, index) => {
+        const offset = index * 4; // 4px vertical stacking offset
+        html += `
+            <div class="absolute w-8 h-8 rounded-full border border-white/20 shadow-md chip-${val} flex items-center justify-center font-bold text-[9px] text-white" 
+                 style="bottom: ${offset}px; z-index: ${index};">
+                $${val}
+            </div>
+        `;
+    });
+    html += '</div>';
+    return html;
+}
+
 // Card DOM Creator Helper
-function createCardElement(card) {
+function createCardElement(card, type = 'dealer', seat = null) {
     const cardDiv = document.createElement('div');
     
     if (card.value === 'hidden') {
         cardDiv.className = 'card back';
+        // Set deal offset for hidden dealer card
+        cardDiv.style.setProperty('--deal-x', '50px');
+        cardDiv.style.setProperty('--deal-y', '-50px');
         return cardDiv;
     }
     
     const isRed = SUIT_NAMES[card.suit] === 'red';
     cardDiv.className = `card ${isRed ? 'red' : 'black'}`;
     
+    // Set custom deal offset based on slot to make it look physical
+    let dx = 0;
+    let dy = -250;
+    
+    if (type === 'dealer') {
+        dx = 50;
+        dy = -50;
+    } else if (type === 'player' && seat) {
+        if (seat === 1) { dx = 250; dy = -300; }
+        else if (seat === 2) { dx = 100; dy = -300; }
+        else if (seat === 3) { dx = -100; dy = -300; }
+        else if (seat === 4) { dx = -250; dy = -300; }
+    }
+    
+    cardDiv.style.setProperty('--deal-x', `${dx}px`);
+    cardDiv.style.setProperty('--deal-y', `${dy}px`);
+    
     const suitSymbol = SUIT_SYMBOLS[card.suit];
+    
+    // Royal card center illustrations
+    let centerHTML = `<div class="card-center">${suitSymbol}</div>`;
+    if (['J', 'Q', 'K'].includes(card.value)) {
+        let royalIcon = '👑'; // default crown for King/Queen
+        if (card.value === 'J') royalIcon = '🛡️'; // shield for Jack
+        centerHTML = `<div class="card-center text-xl filter drop-shadow-sm">${royalIcon}</div>`;
+    } else if (card.value === 'A') {
+        centerHTML = `<div class="card-center text-2xl filter drop-shadow-sm animate-pulse">${suitSymbol}</div>`;
+    }
     
     cardDiv.innerHTML = `
         <div class="card-top">${card.value}<br>${suitSymbol}</div>
-        <div class="card-center">${suitSymbol}</div>
+        ${centerHTML}
         <div class="card-bottom">${card.value}<br>${suitSymbol}</div>
     `;
     
