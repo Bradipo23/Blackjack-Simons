@@ -6,6 +6,7 @@ let mySeat = null;
 let currentBet = 0;
 let roomState = null;
 let audioCtx = null;
+let threeInitialized = false;
 
 // DOM Elements
 const lobbyScreen = document.getElementById('lobby-screen');
@@ -132,6 +133,12 @@ function connect() {
                 lobbyScreen.style.display = 'none';
                 tableScreen.style.display = 'flex';
                 roomCodeDisplay.innerText = myRoomCode;
+                
+                // Initialize 3D table
+                if (!threeInitialized) {
+                    init3DTable();
+                    threeInitialized = true;
+                }
                 break;
                 
             case 'room_state':
@@ -265,47 +272,16 @@ function updateStatusMessage(room) {
 }
 
 function renderDealerHand(room) {
-    let prevCount = prevDealerCardCount;
     // Check if new card was dealt to play card deal sound
     if (room.dealerHand.length > prevDealerCardCount) {
         if (roomState !== 'lobby') playCardSound();
         prevDealerCardCount = room.dealerHand.length;
     } else if (room.dealerHand.length === 0) {
         prevDealerCardCount = 0;
-        prevCount = 0;
     }
 
-    dealerCards.innerHTML = '';
-    const totalDealerCards = room.dealerHand.length;
-    room.dealerHand.forEach((card, index) => {
-        const cardEl = createCardElement(card, 'dealer');
-        // Do not animate previous dealer cards
-        if (index < prevCount) {
-            cardEl.classList.add('no-deal-animate');
-        } else {
-            // Stagger animation for new cards
-            const delay = (index - prevCount) * 150;
-            cardEl.style.animationDelay = `${delay}ms`;
-        }
-        
-        let tx = 0;
-        let ta = 0;
-        
-        // Fan out the dealer's cards slightly for a natural look!
-        if (totalDealerCards > 1) {
-            const mid = (totalDealerCards - 1) / 2;
-            ta = (index - mid) * 4; // subtle 4 degrees separation
-            tx = (index - mid) * 12; // spread
-            cardEl.style.marginLeft = '0px';
-        }
-        
-        cardEl.style.setProperty('--target-x', `${tx}px`);
-        cardEl.style.setProperty('--target-y', '0px');
-        cardEl.style.setProperty('--target-angle', `${ta}deg`);
-        cardEl.style.transform = `translateX(${tx}px) rotate(${ta}deg)`;
-        
-        dealerCards.appendChild(cardEl);
-    });
+    // Call 3D engine
+    updateDealerHand3D(room.dealerHand);
     
     if (room.dealerHand.length > 0) {
         dealerScoreBadge.style.display = 'block';
@@ -329,6 +305,9 @@ function renderPlayerSlots(room) {
             emptyEl.style.display = 'flex';
             cardEl.style.display = 'none';
             delete prevPlayerCardCounts[s];
+            // Clear 3D cards and bets
+            updatePlayerHand3D(s, []);
+            updatePlayerBet3D(s, 0);
         } else {
             emptyEl.style.display = 'none';
             cardEl.style.display = 'flex';
@@ -344,14 +323,15 @@ function renderPlayerSlots(room) {
             cardEl.querySelector('.player-name').innerText = p.name + (p.id === myId ? ' (Tu)' : '');
             cardEl.querySelector('.player-chips').innerText = `$${p.chips}`;
             
-            // Bet Display (3D Stacked Chips)
+            // Bet Display (3D Stacked Chips in WebGL)
             const betArea = cardEl.querySelector('.player-bet-area');
             if (p.bet > 0) {
                 betArea.style.display = 'flex';
                 betArea.querySelector('.bet-value-badge').innerText = `$${p.bet}`;
-                betArea.querySelector('.chip-stack-container').innerHTML = getChipStackHTML(p.bet);
+                updatePlayerBet3D(s, p.bet);
             } else {
                 betArea.style.display = 'none';
+                updatePlayerBet3D(s, 0);
             }
 
             // Sound check for dealt cards
@@ -364,45 +344,8 @@ function renderPlayerSlots(room) {
                 prevCount = 0;
             }
 
-            // Render hand
-            const handLayout = cardEl.querySelector('.cards-layout');
-            handLayout.innerHTML = '';
-            
-            const totalCards = p.hand.length;
-            p.hand.forEach((card, index) => {
-                const cardEl = createCardElement(card, 'player', s);
-                
-                // Disable deal animation for cards already in hand
-                if (index < prevCount) {
-                    cardEl.classList.add('no-deal-animate');
-                } else {
-                    // Stagger animation for new cards
-                    const delay = (index - prevCount) * 150;
-                    cardEl.style.animationDelay = `${delay}ms`;
-                }
-                
-                let tx = 0;
-                let ty = 0;
-                let ta = 0;
-                
-                // Apply fan rotation/offset to simulate holding cards in hand physically
-                if (totalCards > 1) {
-                    const mid = (totalCards - 1) / 2;
-                    ta = (index - mid) * 8; // 8 degrees separation
-                    ty = Math.abs(index - mid) * 4; // curved vertical arc offset
-                    tx = (index - mid) * 15; // horizontal overlap spread offset
-                    
-                    cardEl.style.marginLeft = '0px'; // override overlapping margin
-                }
-                
-                cardEl.style.setProperty('--target-x', `${tx}px`);
-                cardEl.style.setProperty('--target-y', `${ty}px`);
-                cardEl.style.setProperty('--target-angle', `${ta}deg`);
-                
-                cardEl.style.transform = `translateX(${tx}px) translateY(${ty}px) rotate(${ta}deg)`;
-                
-                handLayout.appendChild(cardEl);
-            });
+            // Render hand in 3D WebGL
+            updatePlayerHand3D(s, p.hand);
 
             // Timer bar rendering
             let timerContainer = cardEl.querySelector('.timer-container');

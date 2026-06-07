@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <script id="tailwind-config">
       tailwind.config = {
@@ -217,10 +218,13 @@
             </header>
 
             <!-- Game Felt Table -->
-            <main class="flex-1 p-6 flex items-center justify-center overflow-hidden relative table-perspective-container">
+            <main class="flex-1 p-6 flex items-center justify-center overflow-hidden relative">
                 
                 <!-- The Green Felt Surface -->
-                <div class="felt-texture table-3d-felt w-full max-w-[1250px] h-full max-h-[700px] rounded-[320px_320px_80px_80px] border-[14px] border-surface-container-highest shadow-[0_40px_80px_-20px_rgba(0,0,0,0.85)] flex flex-col justify-between py-10 relative overflow-hidden">
+                <div class="felt-texture w-full max-w-[1250px] h-full max-h-[700px] rounded-[320px_320px_80px_80px] border-[14px] border-surface-container-highest shadow-[0_40px_80px_-20px_rgba(0,0,0,0.85)] flex flex-col justify-between py-10 relative overflow-hidden">
+                    
+                    <!-- WebGL Canvas Container -->
+                    <div id="three-canvas-container" class="absolute inset-0 z-0"></div>
                     
                     <!-- Table Border Gold Highlight -->
                     <div class="absolute inset-1 border border-secondary/10 rounded-[306px_306px_66px_66px] pointer-events-none"></div>
@@ -229,19 +233,7 @@
                     <div class="dealer-section flex flex-col items-center gap-3 z-10 shrink-0">
                         <span class="text-[10px] text-primary font-bold uppercase tracking-[0.3em]">Dealer Stands on 17</span>
                         <div class="dealer-hand-container relative flex justify-center gap-3 min-h-[100px]">
-                            <div id="dealer-cards" class="cards-layout flex justify-center"></div>
                             <div id="dealer-score-badge" class="score-badge bg-surface-container-highest/90 text-on-surface font-semibold text-xs px-3 py-1 rounded-full border border-outline-variant absolute -bottom-5" style="display:none;">0</div>
-                        </div>
-                    </div>
-
-                    <!-- 2. Table Center Brand Logo -->
-                    <div class="table-center flex flex-col items-center justify-center z-0">
-                        <div class="felt-logo-container">
-                            <img src="logo.png" alt="Logo" class="felt-logo-img">
-                            <div class="felt-logo-text">Los Banditos Ciciones</div>
-                        </div>
-                        <div class="deck-shoe mt-4">
-                            <div class="deck-card-back"></div>
                         </div>
                     </div>
 
@@ -397,6 +389,7 @@
     </div>
 
     <!-- Core Client JS Logic -->
+    <script src="three-table.js"></script>
     <script src="client.js"></script>
 </body>
 </html>

@@ -23,32 +23,7 @@
     box-shadow: 0 2px 6px 2px rgba(0,0,0,0.15), 0 1px 2px 0 rgba(0,0,0,0.3);
 }
 
-/* 3D Casino Table Perspective */
-.table-perspective-container {
-    perspective: 1200px;
-    perspective-origin: center 30%;
-}
 
-.table-3d-felt {
-    transform: rotateX(15deg) translateY(12px);
-    transform-style: preserve-3d;
-    box-shadow: 0 45px 85px -15px rgba(0, 0, 0, 0.9), 
-                inset 0 4px 25px rgba(255, 255, 255, 0.15);
-}
-
-/* Propagate 3D context to all table children */
-.table-3d-felt,
-.dealer-section,
-.dealer-hand-container,
-#dealer-cards,
-.players-section,
-.player-slot,
-.slot-player-card,
-.cards-layout,
-.player-bet-area,
-.chip-stack-container {
-    transform-style: preserve-3d;
-}
 
 /* Casino Felt Table Pattern */
 .felt-texture {
