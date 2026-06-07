@@ -549,12 +549,13 @@ function getChipStackHTML(amount) {
     }
     
     // Render up to 8 chips in vertical offset
-    let html = '<div class="chip-stack relative w-12 h-14 flex items-end justify-center">';
+    let html = '<div class="chip-stack relative w-12 h-14 flex items-end justify-center" style="transform-style: preserve-3d;">';
     chipsToRender.slice(0, 8).forEach((val, index) => {
-        const offset = index * 4; // 4px vertical stacking offset
+        const offset = index * 4; // Y-offset to align them
+        const zOffset = index * 3; // 3px Z-axis stacking height
         html += `
             <div class="absolute w-8 h-8 rounded-full border border-white/20 shadow-md chip-${val} flex items-center justify-center font-bold text-[9px] text-white" 
-                 style="bottom: ${offset}px; z-index: ${index};">
+                 style="bottom: 0px; transform: translate3d(0, -${offset}px, ${zOffset}px); z-index: ${index};">
                 $${val}
             </div>
         `;
