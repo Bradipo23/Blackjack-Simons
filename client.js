@@ -282,14 +282,21 @@ function renderDealerHand(room) {
             cardEl.classList.add('no-deal-animate');
         }
         
+        let tx = 0;
+        let ta = 0;
+        
         // Fan out the dealer's cards slightly for a natural look!
         if (totalDealerCards > 1) {
             const mid = (totalDealerCards - 1) / 2;
-            const angle = (index - mid) * 4; // subtle 4 degrees separation
-            const xOffset = (index - mid) * 12; // spread
-            cardEl.style.transform = `translateX(${xOffset}px) rotate(${angle}deg)`;
+            ta = (index - mid) * 4; // subtle 4 degrees separation
+            tx = (index - mid) * 12; // spread
             cardEl.style.marginLeft = '0px';
         }
+        
+        cardEl.style.setProperty('--target-x', `${tx}px`);
+        cardEl.style.setProperty('--target-y', '0px');
+        cardEl.style.setProperty('--target-angle', `${ta}deg`);
+        cardEl.style.transform = `translateX(${tx}px) rotate(${ta}deg)`;
         
         dealerCards.appendChild(cardEl);
     });
@@ -362,16 +369,25 @@ function renderPlayerSlots(room) {
                     cardEl.classList.add('no-deal-animate');
                 }
                 
+                let tx = 0;
+                let ty = 0;
+                let ta = 0;
+                
                 // Apply fan rotation/offset to simulate holding cards in hand physically
                 if (totalCards > 1) {
                     const mid = (totalCards - 1) / 2;
-                    const angle = (index - mid) * 8; // 8 degrees separation
-                    const yOffset = Math.abs(index - mid) * 4; // curved vertical arc offset
-                    const xOffset = (index - mid) * 15; // horizontal overlap spread offset
+                    ta = (index - mid) * 8; // 8 degrees separation
+                    ty = Math.abs(index - mid) * 4; // curved vertical arc offset
+                    tx = (index - mid) * 15; // horizontal overlap spread offset
                     
-                    cardEl.style.transform = `translateX(${xOffset}px) translateY(${yOffset}px) rotate(${angle}deg)`;
                     cardEl.style.marginLeft = '0px'; // override overlapping margin
                 }
+                
+                cardEl.style.setProperty('--target-x', `${tx}px`);
+                cardEl.style.setProperty('--target-y', `${ty}px`);
+                cardEl.style.setProperty('--target-angle', `${ta}deg`);
+                
+                cardEl.style.transform = `translateX(${tx}px) translateY(${ty}px) rotate(${ta}deg)`;
                 
                 handLayout.appendChild(cardEl);
             });
