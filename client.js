@@ -189,6 +189,7 @@ btnLeaveRoom.addEventListener('click', () => {
 // Betting actions
 document.querySelectorAll('.chip').forEach(chip => {
     chip.addEventListener('click', () => {
+        initAudio();
         playChipSound();
         const val = parseInt(chip.getAttribute('data-value'));
         currentBet += val;

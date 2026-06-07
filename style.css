@@ -27,8 +27,8 @@
 
 /* Casino Felt Table Pattern */
 .felt-texture {
-    background-color: #0b2e24;
-    background-image: radial-gradient(circle at center, #124034 0%, #0b2e24 100%);
+    background-color: #172d1f;
+    background-image: radial-gradient(circle at center, #1f3b2a 0%, #122217 100%);
     position: relative;
 }
 .felt-texture::after {
@@ -42,9 +42,9 @@
 
 /* Dynamic Active Turn Glowing State */
 .slot-player-card.active-turn {
-    border-color: #95d3ba !important; /* M3 primary */
-    transform: translateY(-8px);
-    box-shadow: 0 10px 30px rgba(149, 211, 186, 0.25) !important;
+    border-color: #cba258 !important; /* Brass highlight */
+    transform: translateY(-6px);
+    box-shadow: 0 12px 30px rgba(203, 162, 88, 0.3) !important;
 }
 
 /* Card Styling & Overlap */
@@ -62,9 +62,9 @@
     position: relative;
     transform-style: preserve-3d;
     backface-visibility: hidden;
-    animation: deal-card 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: deal-card 0.65s cubic-bezier(0.32, 0.72, 0, 1) both;
     transform-origin: center center;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .no-deal-animate {
@@ -76,17 +76,18 @@
 }
 
 .card.red {
-    color: #ff4a4a;
+    color: #cc3c3c; /* Rusty Red */
 }
 
 .card.black {
-    color: #131313;
+    color: #221f1e; /* Charcoal black */
 }
 
 .card-top {
     font-size: 0.95rem;
     font-weight: 800;
     line-height: 1;
+    font-family: 'Playfair Display', serif;
 }
 
 .card-center {
@@ -101,19 +102,20 @@
     font-weight: 800;
     line-height: 1;
     transform: rotate(180deg);
+    font-family: 'Playfair Display', serif;
 }
 
 .card.back {
-    background: radial-gradient(circle, #e5c05c 0%, #7b1d1d 100%);
-    border: 3px solid #ffffff;
+    background: radial-gradient(circle, #cba258 0%, #3e2212 100%);
+    border: 3px solid #f5eedc;
     color: transparent;
     box-shadow: 0px 4px 12px rgba(0,0,0,0.6);
-    outline: 1.5px solid rgba(212, 175, 55, 0.4);
+    outline: 1.5px solid rgba(203, 162, 88, 0.4);
 }
 
 .card:hover {
     transform: translate3d(var(--target-x, 0px), calc(var(--target-y, 0px) - 15px), 30px) rotate(calc(var(--target-angle, 0deg) + 3deg)) scale(1.08) !important;
-    box-shadow: 0px 15px 30px rgba(212, 175, 55, 0.4);
+    box-shadow: 0px 15px 30px rgba(203, 162, 88, 0.4);
     z-index: 100;
     cursor: pointer;
 }
@@ -158,14 +160,14 @@
 .timer-bar {
     height: 100%;
     width: 100%;
-    background: #95d3ba;
-    transition: width 1s linear, background-color 0.3s ease;
+    background: #cba258;
+    transition: width 1s linear, background-color 0.3s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* Metallic Chip Styles */
 .chip {
-    border: 3px dashed #ffffff;
-    color: #ffffff;
+    border: 3px dashed #f5eedc;
+    color: #f5eedc;
     font-family: 'Orbitron', sans-serif;
     font-weight: 900;
     display: flex;
@@ -173,7 +175,7 @@
     align-items: center;
     cursor: pointer;
     box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition: transform 0.2s cubic-bezier(0.32, 0.72, 0, 1), box-shadow 0.2s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .chip:hover {
@@ -185,42 +187,80 @@
     transform: scale(0.95);
 }
 
-.chip-10 { background: #3e8eff; }
-.chip-25 { background: #e53935; }
-.chip-50 { background: #43a047; }
-.chip-100 { background: #1e1e1e; color: #ffb300; border-color: #ffb300; }
-.chip-500 { background: #8e24aa; }
+.chip-10 { background: #4a5568; }
+.chip-25 { background: #aa3838; }
+.chip-50 { background: #2d5a3c; }
+.chip-100 { background: #1a1919; color: #cba258; border-color: #cba258; }
+.chip-500 { background: #6b2d5c; }
 
-/* Status tags overlay (WIN, LOSE, BUST, BJ) */
+/* Status tags overlay (WIN, LOSE, BUST, BJ) - Distressed Outlaw Wanted Poster Style */
 .player-status-tag {
     position: absolute;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%) rotate(-10deg);
-    background: rgba(198, 40, 40, 0.9);
-    color: #ffffff;
+    transform: translate(-50%, -50%) rotate(-6deg);
+    background: #ebdcb9; /* Warm vintage parchment paper */
+    color: #1b1613; /* Carbon dark ink */
+    font-family: 'Playfair Display', serif;
     font-weight: 900;
-    font-size: 0.85rem;
-    padding: 4px 12px;
-    border-radius: 6px;
-    letter-spacing: 2px;
-    border: 2px solid #ffffff;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-    z-index: 12;
+    font-size: 1.1rem;
+    padding: 14px 20px 8px;
+    border-radius: 2px;
+    letter-spacing: 1px;
+    border: 2px solid #3e2212; /* Mahogany frame border */
+    box-shadow: 0 12px 28px rgba(0,0,0,0.7);
+    z-index: 25;
+    text-align: center;
+    min-width: 120px;
+}
+
+.player-status-tag::before {
+    content: "WANTED";
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: 0.6rem;
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #cc3c3c; /* Blood/Rust Red kicker */
+    margin-bottom: 4px;
+    border-bottom: 1px dashed rgba(62, 34, 18, 0.3);
+    padding-bottom: 2px;
 }
 
 .player-status-tag.win {
-    background: rgba(46, 125, 50, 0.9);
+    background: #f1ebd9;
+    border-color: #213d2b;
+    color: #213d2b;
+}
+
+.player-status-tag.win::before {
+    content: "REWARD";
 }
 
 .player-status-tag.blackjack {
-    background: rgba(249, 189, 34, 0.95);
-    color: #261a00;
-    border-color: #261a00;
+    background: #f9f5e8;
+    border-color: #cba258;
+    color: #8c6a2c;
+    animation: pulseGlow 1.5s infinite alternate;
+}
+
+.player-status-tag.blackjack::before {
+    content: "DEAD OR ALIVE";
 }
 
 .player-status-tag.push {
-    background: rgba(239, 108, 0, 0.9);
+    background: #ebdcb9;
+    border-color: #555555;
+    color: #555555;
+}
+
+.player-status-tag.push::before {
+    content: "EQUAL OUTLAW";
+}
+
+@keyframes pulseGlow {
+    from { box-shadow: 0 12px 28px rgba(0,0,0,0.7), 0 0 10px rgba(203,162,88,0.2); }
+    to { box-shadow: 0 12px 28px rgba(0,0,0,0.7), 0 0 25px rgba(203,162,88,0.6); }
 }
 
 /* Felt Logo Branding */

@@ -9,6 +9,7 @@ const animatedObjects = [];
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 let cardBackTexture;
+const chipTexturesCache = {};
 
 // 3D coordinates for seats
 const SEAT_POSITIONS = {
@@ -49,48 +50,78 @@ function init3DTable() {
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     container.appendChild(renderer.domElement);
 
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    // Warm, dim saloon ambient light (lantern mood)
+    const ambientLight = new THREE.AmbientLight(0xffedd5, 0.22);
     scene.add(ambientLight);
 
-    // Spotlight pointing at table center for casino glow & shadows
-    const spotLight = new THREE.SpotLight(0xfff6e0, 1.6);
-    spotLight.position.set(0, 6, 2);
-    spotLight.angle = Math.PI / 4;
-    spotLight.penumbra = 0.6;
+    // Heavy warm spotlight representing a hanging oil lantern above table center
+    const spotLight = new THREE.SpotLight(0xffaa44, 2.8);
+    spotLight.position.set(0, 5.0, 0.5);
+    spotLight.angle = Math.PI / 3;
+    spotLight.penumbra = 0.8;
     spotLight.castShadow = true;
     spotLight.shadow.mapSize.width = 1024;
     spotLight.shadow.mapSize.height = 1024;
     spotLight.shadow.camera.near = 1;
     spotLight.shadow.camera.far = 15;
-    spotLight.shadow.bias = -0.002;
+    spotLight.shadow.bias = -0.001;
     scene.add(spotLight);
 
-    // Directional helper light
-    const dirLight = new THREE.DirectionalLight(0x95d3ba, 0.35); // subtle green table glow
-    dirLight.position.set(-2, 3, -1);
+    // Subtle fill light (brass bounce glow)
+    const dirLight = new THREE.DirectionalLight(0xcba258, 0.4);
+    dirLight.position.set(-2, 3.5, 2);
     scene.add(dirLight);
 
-    // Shadow receiver plane on table surface (invisible, shadows only)
-    const shadowPlaneGeo = new THREE.PlaneGeometry(12, 10);
-    const shadowPlaneMat = new THREE.ShadowMaterial({ opacity: 0.55 });
-    const shadowPlane = new THREE.Mesh(shadowPlaneGeo, shadowPlaneMat);
-    shadowPlane.rotation.x = -Math.PI / 2;
-    shadowPlane.position.y = 0;
-    shadowPlane.receiveShadow = true;
-    scene.add(shadowPlane);
+    // 1. Table Felt Mesh (circular plane)
+    const feltGeo = new THREE.CylinderGeometry(3.5, 3.5, 0.02, 64);
+    const feltMat = new THREE.MeshStandardMaterial({
+        color: 0x213d2b, // vintage dusty green felt
+        roughness: 0.95,
+        metalness: 0.05
+    });
+    const feltMesh = new THREE.Mesh(feltGeo, feltMat);
+    feltMesh.position.y = -0.01;
+    feltMesh.receiveShadow = true;
+    scene.add(feltMesh);
 
-    // Generate reusable card back texture
+    // 2. Torus for the rounded mahogany wood rail around the table
+    const railGeo = new THREE.TorusGeometry(3.55, 0.15, 16, 100);
+    const railMat = new THREE.MeshStandardMaterial({
+        color: 0x3e2212, // dark mahogany wood
+        roughness: 0.5,
+        metalness: 0.1
+    });
+    const railMesh = new THREE.Mesh(railGeo, railMat);
+    railMesh.rotation.x = Math.PI / 2;
+    railMesh.position.y = 0.01;
+    railMesh.castShadow = true;
+    railMesh.receiveShadow = true;
+    scene.add(railMesh);
+
+    // Reusable card back texture
     cardBackTexture = createCardBackTexture();
 
-    // Create 3D Shoe (Sabot) at top right
-    const shoeGeo = new THREE.BoxGeometry(0.7, 0.35, 1.0);
-    const shoeMat = new THREE.MeshStandardMaterial({ color: 0x1d1a16, roughness: 0.6, metalness: 0.1 });
-    const shoeMesh = new THREE.Mesh(shoeGeo, shoeMat);
-    shoeMesh.position.set(2.4, 0.175, -1.8);
-    shoeMesh.rotation.set(-0.15, -0.45, -0.1);
-    shoeMesh.castShadow = true;
-    scene.add(shoeMesh);
+    // Create 3D Shoe (Sabot) detailed wooden base + brass plate at top right
+    const shoeGroup = new THREE.Group();
+
+    // Wood base box
+    const shoeBaseGeo = new THREE.BoxGeometry(0.65, 0.3, 0.95);
+    const shoeBaseMat = new THREE.MeshStandardMaterial({ color: 0x3e2212, roughness: 0.45, metalness: 0.05 });
+    const shoeBase = new THREE.Mesh(shoeBaseGeo, shoeBaseMat);
+    shoeBase.castShadow = true;
+    shoeGroup.add(shoeBase);
+
+    // Brass front plate
+    const brassPlateGeo = new THREE.BoxGeometry(0.67, 0.28, 0.08);
+    const brassPlateMat = new THREE.MeshStandardMaterial({ color: 0xcba258, roughness: 0.15, metalness: 0.9 });
+    const brassPlate = new THREE.Mesh(brassPlateGeo, brassPlateMat);
+    brassPlate.position.set(0, 0.02, 0.45);
+    brassPlate.castShadow = true;
+    shoeGroup.add(brassPlate);
+
+    shoeGroup.position.set(2.4, 0.15, -1.8);
+    shoeGroup.rotation.set(-0.15, -0.45, -0.1);
+    scene.add(shoeGroup);
 
     // Start render loop
     requestAnimationFrame(animateScene);
@@ -102,11 +133,13 @@ function init3DTable() {
 
 // Mouse move tracking
 function onMouseMove(event) {
+    if (!renderer) return;
     const rect = renderer.domElement.getBoundingClientRect();
     mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
     mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 }
 
+// Window resize
 function onWindowResize() {
     if (!container || !renderer) return;
     const width = container.clientWidth;
@@ -122,7 +155,7 @@ function animateScene(time) {
 
     const now = performance.now();
     
-    // Process card deal animations
+    // Process card deal and repositioning animations
     for (let i = animatedObjects.length - 1; i >= 0; i--) {
         const anim = animatedObjects[i];
         if (now < anim.startTime) {
@@ -172,13 +205,12 @@ function checkCardHover() {
     allCards.forEach(c => c.userData.isHovered = false);
 
     if (intersects.length > 0) {
-        // Intersect only the top-most card under cursor
         intersects[0].object.userData.isHovered = true;
     }
 
     // Smoothly lift card up off table surface on hover
     allCards.forEach(card => {
-        const targetLift = card.userData.isHovered ? 0.25 : 0;
+        const targetLift = card.userData.isHovered ? 0.22 : 0;
         card.userData.currentLift = card.userData.currentLift || 0;
         card.userData.currentLift += (targetLift - card.userData.currentLift) * 0.15; // smooth lerp
 
@@ -205,66 +237,70 @@ function animateCardDeal(mesh, targetPos, targetRot, delay) {
     
     animatedObjects.push({
         mesh: mesh,
-        startPos: startPos,
-        startRot: startRot,
-        targetPos: targetPos,
-        targetRot: targetRot,
+        startPos: startPos.clone(),
+        startRot: startRot.clone(),
+        targetPos: targetPos.clone(),
+        targetRot: targetRot.clone(),
         startTime: performance.now() + delay,
         duration: 650
     });
 }
 
-// Generate Canvas texture for dynamic card faces
+// Generate Canvas texture for dynamic card faces (Playfair Display & Warm Parchment)
 function createCardTexture(value, suit) {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 384;
     const ctx = canvas.getContext('2d');
     
-    // Background
-    ctx.fillStyle = '#ffffff';
+    // Background: warm vintage parchment
+    ctx.fillStyle = '#f5eedc';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Gold filigree border
-    ctx.strokeStyle = '#d4af37';
-    ctx.lineWidth = 6;
+    // Gold/brass filigree double border
+    ctx.strokeStyle = '#cba258';
+    ctx.lineWidth = 4;
     ctx.strokeRect(8, 8, canvas.width - 16, canvas.height - 16);
     
+    ctx.strokeStyle = 'rgba(203, 162, 88, 0.4)';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(14, 14, canvas.width - 28, canvas.height - 28);
+    
     const isRed = ['H', 'D'].includes(suit);
-    ctx.fillStyle = isRed ? '#ff4a4a' : '#131313';
+    ctx.fillStyle = isRed ? '#cc3c3c' : '#221f1e';
     
     const suitSymbol = { H: '♥', D: '♦', C: '♣', S: '♠' }[suit] || '';
     
-    // Font parameters
-    ctx.font = 'bold 38px "Open Sans", sans-serif';
-    ctx.fillText(value, 22, 55);
-    ctx.font = '32px sans-serif';
-    ctx.fillText(suitSymbol, 22, 95);
+    // Font parameters - Playfair Display
+    ctx.font = 'bold 36px "Playfair Display", Georgia, serif';
+    ctx.fillText(value, 22, 54);
+    ctx.font = '28px sans-serif';
+    ctx.fillText(suitSymbol, 22, 90);
     
     // Rotated bottom corner
     ctx.save();
-    ctx.translate(canvas.width - 22, canvas.height - 55);
+    ctx.translate(canvas.width - 22, canvas.height - 54);
     ctx.rotate(Math.PI);
-    ctx.font = 'bold 38px "Open Sans", sans-serif';
+    ctx.font = 'bold 36px "Playfair Display", Georgia, serif';
     ctx.fillText(value, 0, 0);
-    ctx.font = '32px sans-serif';
-    ctx.fillText(suitSymbol, 0, 40);
+    ctx.font = '28px sans-serif';
+    ctx.fillText(suitSymbol, 0, 36);
     ctx.restore();
     
-    // Illustration in center
+    // Center illustration
     ctx.save();
     ctx.translate(canvas.width / 2, canvas.height / 2);
     if (['J', 'Q', 'K'].includes(value)) {
-        ctx.font = '100px sans-serif';
-        let icon = '👑';
-        if (value === 'J') icon = '🛡️';
-        ctx.fillText(icon, -50, 32);
-    } else if (value === 'A') {
-        ctx.font = '115px sans-serif';
-        ctx.fillText(suitSymbol, -58, 40);
-    } else {
         ctx.font = '90px sans-serif';
-        ctx.fillText(suitSymbol, -45, 30);
+        let icon = '👑';
+        if (value === 'J') icon = '🤠'; // cowboy hat for Jack!
+        ctx.fillText(icon, -45, 30);
+    } else if (value === 'A') {
+        ctx.font = '110px sans-serif';
+        ctx.fillText(suitSymbol, -55, 38);
+    } else {
+        ctx.font = '85px sans-serif';
+        ctx.fillText(suitSymbol, -42, 28);
     }
     ctx.restore();
     
@@ -273,22 +309,22 @@ function createCardTexture(value, suit) {
     return texture;
 }
 
-// Generate Canvas texture for geometric card backs
+// Generate Canvas texture for geometric card backs (Sheriff Star & Rich Red)
 function createCardBackTexture() {
     const canvas = document.createElement('canvas');
     canvas.width = 256;
     canvas.height = 384;
     const ctx = canvas.getContext('2d');
     
-    // Gold/Red gradients back texture
+    // Radial gradient: rust red center to deep coffee brown
     const grad = ctx.createRadialGradient(canvas.width/2, canvas.height/2, 20, canvas.width/2, canvas.height/2, 240);
-    grad.addColorStop(0, '#7b1d1d');
-    grad.addColorStop(1, '#470b0b');
+    grad.addColorStop(0, '#912c2c');
+    grad.addColorStop(1, '#240c0c');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
     // Diamond lattice pattern
-    ctx.strokeStyle = 'rgba(212, 175, 55, 0.25)';
+    ctx.strokeStyle = 'rgba(203, 162, 88, 0.35)';
     ctx.lineWidth = 1.5;
     for (let i = -100; i < canvas.width + 100; i += 24) {
         ctx.beginPath();
@@ -302,18 +338,89 @@ function createCardBackTexture() {
         ctx.stroke();
     }
     
-    // White card border
-    ctx.strokeStyle = '#ffffff';
+    // Warm parchment card border
+    ctx.strokeStyle = '#f5eedc';
     ctx.lineWidth = 8;
     ctx.strokeRect(4, 4, canvas.width - 8, canvas.height - 8);
     
     // Gold inner border
-    ctx.strokeStyle = 'rgba(212, 175, 55, 0.6)';
+    ctx.strokeStyle = 'rgba(203, 162, 88, 0.6)';
     ctx.lineWidth = 3;
     ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
     
+    // Draw Sheriff star in the center of card back
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.fillStyle = '#cba258';
+    
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+    ctx.shadowBlur = 4;
+    ctx.shadowOffsetX = 1;
+    ctx.shadowOffsetY = 1;
+    
+    ctx.beginPath();
+    for (let i = 0; i < 8; i++) {
+        ctx.rotate(Math.PI / 4);
+        ctx.lineTo(0, -20);
+        ctx.rotate(Math.PI / 4);
+        ctx.lineTo(0, -7);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+    
     const texture = new THREE.CanvasTexture(canvas);
     texture.minFilter = THREE.LinearFilter;
+    return texture;
+}
+
+// Canvas texture generator for premium chips
+function getChipTexture(val, colorHex) {
+    if (chipTexturesCache[val]) return chipTexturesCache[val];
+    
+    const canvas = document.createElement('canvas');
+    canvas.width = 128;
+    canvas.height = 128;
+    const ctx = canvas.getContext('2d');
+    
+    // Base circle color
+    ctx.fillStyle = colorHex;
+    ctx.beginPath();
+    ctx.arc(64, 64, 64, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Outer gold rim
+    ctx.strokeStyle = '#cba258';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(64, 64, 58, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Alternating dashes on the rim (poker chip dashes)
+    ctx.strokeStyle = '#ebdcb9';
+    ctx.lineWidth = 5;
+    ctx.setLineDash([12, 16]);
+    ctx.beginPath();
+    ctx.arc(64, 64, 52, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]); // Reset
+    
+    // Core circle
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.beginPath();
+    ctx.arc(64, 64, 34, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Gold text value
+    ctx.fillStyle = '#ebdcb9';
+    ctx.font = 'bold 24px "Playfair Display", Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('$' + val, 64, 64);
+    
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.minFilter = THREE.LinearFilter;
+    chipTexturesCache[val] = texture;
     return texture;
 }
 
@@ -386,14 +493,27 @@ function updateDealerHand3D(hand) {
             mesh.userData.zIndex = index;
             mesh.userData.baseRotY = ta;
             
-            // Check if card is currently anim, redirect it
+            // Correct position adjustments smoothly instead of wiggling/snapping
             const anim = animatedObjects.find(a => a.mesh === mesh);
             if (anim) {
                 anim.targetPos.copy(targetPos);
                 anim.targetRot.copy(targetRot);
             } else {
-                mesh.position.copy(targetPos);
-                mesh.rotation.copy(targetRot);
+                const dist = mesh.position.distanceTo(targetPos);
+                if (dist > 0.01) {
+                    animatedObjects.push({
+                        mesh: mesh,
+                        startPos: mesh.position.clone(),
+                        startRot: new THREE.Vector3(mesh.rotation.x, mesh.rotation.y, mesh.rotation.z),
+                        targetPos: targetPos.clone(),
+                        targetRot: targetRot.clone(),
+                        startTime: performance.now(),
+                        duration: 250 // quick smooth correction
+                    });
+                } else {
+                    mesh.position.copy(targetPos);
+                    mesh.rotation.copy(targetRot);
+                }
             }
             updateCardMeshTexture(mesh, card);
         } else {
@@ -402,7 +522,7 @@ function updateDealerHand3D(hand) {
             scene.add(mesh);
             dealerCardsMesh.push(mesh);
             
-            // Deal animation
+            // Deal flight animation from sabot
             const delay = (index - totalCurrent) * 150;
             animateCardDeal(mesh, targetPos, targetRot, delay);
         }
@@ -453,13 +573,27 @@ function updatePlayerHand3D(seat, hand) {
             mesh.userData.zIndex = index;
             mesh.userData.baseRotY = ta;
             
+            // Correct position adjustments smoothly instead of wiggling/snapping
             const anim = animatedObjects.find(a => a.mesh === mesh);
             if (anim) {
                 anim.targetPos.copy(targetPos);
                 anim.targetRot.copy(targetRot);
             } else {
-                mesh.position.copy(targetPos);
-                mesh.rotation.copy(targetRot);
+                const dist = mesh.position.distanceTo(targetPos);
+                if (dist > 0.01) {
+                    animatedObjects.push({
+                        mesh: mesh,
+                        startPos: mesh.position.clone(),
+                        startRot: new THREE.Vector3(mesh.rotation.x, mesh.rotation.y, mesh.rotation.z),
+                        targetPos: targetPos.clone(),
+                        targetRot: targetRot.clone(),
+                        startTime: performance.now(),
+                        duration: 250 // quick smooth correction
+                    });
+                } else {
+                    mesh.position.copy(targetPos);
+                    mesh.rotation.copy(targetRot);
+                }
             }
             updateCardMeshTexture(mesh, card);
         } else {
@@ -468,7 +602,7 @@ function updatePlayerHand3D(seat, hand) {
             scene.add(mesh);
             playerCardsMesh[seat].push(mesh);
             
-            // Deal animation
+            // Deal flight animation from sabot
             const delay = (index - totalCurrent) * 150;
             animateCardDeal(mesh, targetPos, targetRot, delay);
         }
@@ -482,7 +616,7 @@ function updatePlayerHand3D(seat, hand) {
     }
 }
 
-// API: Sync Player Bet Stack in 3D (Physical stack)
+// API: Sync Player Bet Stack in 3D (Physical textured coin stack)
 function updatePlayerBet3D(seat, amount) {
     if (!scene) return;
     
@@ -516,22 +650,32 @@ function updatePlayerBet3D(seat, amount) {
         const chipGeo = new THREE.CylinderGeometry(chipRadius, chipRadius, chipHeight, 32);
         
         const chipColors = {
-            10: 0x3e8eff,  // Blue
-            25: 0xe53935,  // Red
-            50: 0x43a047,  // Green
-            100: 0x1e1e1e, // Black
-            500: 0x8e24aa  // Purple
+            10: '#4a5568',  // Grey/Iron
+            25: '#aa3838',  // Red/Copper
+            50: '#2d5a3c',  // Green/Verdigris
+            100: '#1a1919', // Charcoal/Brass
+            500: '#6b2d5c'  // Plum/Gold
         };
         
-        const color = chipColors[val] || 0xffffff;
-        const chipMat = new THREE.MeshStandardMaterial({
-            color: color,
-            roughness: 0.35,
-            metalness: val === 100 ? 0.75 : 0.1, // make 100 chip slightly metallic/gold ringed
-            bumpScale: 0.05
+        const colorHex = chipColors[val] || '#ffffff';
+        const colorVal = new THREE.Color(colorHex);
+        
+        const sideMat = new THREE.MeshStandardMaterial({
+            color: colorVal,
+            roughness: 0.55,
+            metalness: val === 100 || val === 500 ? 0.6 : 0.1
         });
         
-        const mesh = new THREE.Mesh(chipGeo, chipMat);
+        const faceTex = getChipTexture(val, colorHex);
+        const faceMat = new THREE.MeshStandardMaterial({
+            map: faceTex,
+            roughness: 0.3,
+            metalness: val === 100 || val === 500 ? 0.6 : 0.1
+        });
+        
+        const materials = [sideMat, faceMat, faceMat]; // side, top, bottom
+        
+        const mesh = new THREE.Mesh(chipGeo, materials);
         mesh.castShadow = true;
         mesh.receiveShadow = true;
         
