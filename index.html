@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Royal Casino Blackjack Online</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Outfit:wght@300;400;600;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- 1. LOBBY SCREEN -->
+        <div id="lobby-screen" class="screen">
+            <div class="lobby-card glass">
+                <div class="logo-area">
+                    <div class="chip-logo">♣</div>
+                    <h1>Royal Casino</h1>
+                    <div class="subtitle">Blackjack Online</div>
+                </div>
+                
+                <div class="input-group">
+                    <label for="player-name">Tuo Nome</label>
+                    <input type="text" id="player-name" placeholder="Es. Mario" maxlength="12">
+                </div>
+
+                <div class="lobby-actions">
+                    <button id="btn-create-room" class="btn btn-primary">Crea Nuova Stanza</button>
+                    
+                    <div class="divider"><span>oppure entra in una</span></div>
+                    
+                    <div class="join-group">
+                        <input type="text" id="room-code-input" placeholder="Codice Stanza (4 cifre)" maxlength="4">
+                        <button id="btn-join-room" class="btn btn-secondary">Entra</button>
+                    </div>
+                </div>
+                
+                <div id="lobby-error" class="error-text"></div>
+            </div>
+        </div>
+
+        <!-- 2. GAME TABLE SCREEN -->
+        <div id="table-screen" class="screen" style="display: none;">
+            <!-- Top bar with game state, room code -->
+            <header class="table-header">
+                <div class="header-left">
+                    <span class="room-label">Stanza:</span>
+                    <span id="room-code-display" class="room-code">----</span>
+                </div>
+                <div class="header-center">
+                    <div id="game-status-msg" class="status-msg">In attesa dei giocatori...</div>
+                </div>
+                <div class="header-right">
+                    <button id="btn-leave-room" class="btn btn-danger btn-sm">Esci</button>
+                </div>
+            </header>
+
+            <!-- Virtual Felt Table -->
+            <div class="blackjack-table">
+                <!-- Dealer Area -->
+                <div class="dealer-section">
+                    <div class="dealer-label">BANCO (Stands on 17)</div>
+                    <div class="dealer-hand-container">
+                        <div id="dealer-cards" class="cards-layout"></div>
+                        <div id="dealer-score-badge" class="score-badge" style="display:none;">0</div>
+                    </div>
+                </div>
+
+                <!-- Center Area: Deck Shoe and Room Info -->
+                <div class="table-center">
+                    <div class="felt-logo">Royal Casino</div>
+                    <div class="deck-shoe">
+                        <div class="deck-card-back"></div>
+                    </div>
+                </div>
+
+                <!-- Players Slots (arranged dynamically) -->
+                <div class="players-section">
+                    <!-- Player Slot 1 -->
+                    <div class="player-slot" id="slot-1">
+                        <div class="slot-empty">Posto Libero</div>
+                        <div class="slot-player-card glass" style="display:none;">
+                            <div class="player-name">Giocatore 1</div>
+                            <div class="player-chips">$1000</div>
+                            <div class="cards-layout"></div>
+                            <div class="score-badge">0</div>
+                            <div class="player-bet-badge" style="display:none;">$0</div>
+                            <div class="player-status-tag" style="display:none;">STAND</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Player Slot 2 -->
+                    <div class="player-slot" id="slot-2">
+                        <div class="slot-empty">Posto Libero</div>
+                        <div class="slot-player-card glass" style="display:none;">
+                            <div class="player-name">Giocatore 2</div>
+                            <div class="player-chips">$1000</div>
+                            <div class="cards-layout"></div>
+                            <div class="score-badge">0</div>
+                            <div class="player-bet-badge" style="display:none;">$0</div>
+                            <div class="player-status-tag" style="display:none;">STAND</div>
+                        </div>
+                    </div>
+
+                    <!-- Player Slot 3 -->
+                    <div class="player-slot" id="slot-3">
+                        <div class="slot-empty">Posto Libero</div>
+                        <div class="slot-player-card glass" style="display:none;">
+                            <div class="player-name">Giocatore 3</div>
+                            <div class="player-chips">$1000</div>
+                            <div class="cards-layout"></div>
+                            <div class="score-badge">0</div>
+                            <div class="player-bet-badge" style="display:none;">$0</div>
+                            <div class="player-status-tag" style="display:none;">STAND</div>
+                        </div>
+                    </div>
+
+                    <!-- Player Slot 4 -->
+                    <div class="player-slot" id="slot-4">
+                        <div class="slot-empty">Posto Libero</div>
+                        <div class="slot-player-card glass" style="display:none;">
+                            <div class="player-name">Giocatore 4</div>
+                            <div class="player-chips">$1000</div>
+                            <div class="cards-layout"></div>
+                            <div class="score-badge">0</div>
+                            <div class="player-bet-badge" style="display:none;">$0</div>
+                            <div class="player-status-tag" style="display:none;">STAND</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Control Panel -->
+            <footer class="table-controls">
+                <!-- Betting Phase Controls -->
+                <div id="betting-controls" class="controls-group" style="display:none;">
+                    <div class="bet-label">Scegli la tua Puntata:</div>
+                    <div class="chips-container">
+                        <button class="chip chip-10" data-value="10">$10</button>
+                        <button class="chip chip-25" data-value="25">$25</button>
+                        <button class="chip chip-50" data-value="50">$50</button>
+                        <button class="chip chip-100" data-value="100">$100</button>
+                        <button class="chip chip-500" data-value="500">$500</button>
+                    </div>
+                    <div class="bet-action-row">
+                        <span class="current-bet-display">Puntata Corrente: <strong id="current-bet-val">$0</strong></span>
+                        <button id="btn-clear-bet" class="btn btn-secondary btn-sm">Cancella</button>
+                        <button id="btn-place-bet" class="btn btn-primary">Conferma Scommessa</button>
+                    </div>
+                </div>
+
+                <!-- Player Turn Decision Controls -->
+                <div id="gameplay-controls" class="controls-group" style="display:none;">
+                    <button id="btn-action-hit" class="btn btn-action btn-hit">Carta (Hit)</button>
+                    <button id="btn-action-stand" class="btn btn-action btn-stand">Stai (Stand)</button>
+                    <button id="btn-action-double" class="btn btn-action btn-double">Raddoppia (Double)</button>
+                </div>
+
+                <!-- Lobby Waiting Controls -->
+                <div id="lobby-controls" class="controls-group" style="display:none;">
+                    <div class="waiting-text">In attesa che gli altri giocatori si uniscano...</div>
+                    <button id="btn-start-game" class="btn btn-primary" style="display:none;">Inizia Partita</button>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Core Client WS and Game logic -->
+    <script src="client.js"></script>
+</body>
+</html>

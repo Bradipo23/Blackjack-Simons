@@ -1,0 +1,451 @@
+// client.js - Royal Casino Blackjack Client
+let socket;
+let myId = null;
+let myRoomCode = null;
+let mySeat = null;
+let currentBet = 0;
+let roomState = null;
+let audioCtx = null;
+
+// DOM Elements
+const lobbyScreen = document.getElementById('lobby-screen');
+const tableScreen = document.getElementById('table-screen');
+const playerNameInput = document.getElementById('player-name');
+const roomCodeInput = document.getElementById('room-code-input');
+const btnCreateRoom = document.getElementById('btn-create-room');
+const btnJoinRoom = document.getElementById('btn-join-room');
+const btnLeaveRoom = document.getElementById('btn-leave-room');
+const lobbyError = document.getElementById('lobby-error');
+
+const roomCodeDisplay = document.getElementById('room-code-display');
+const gameStatusMsg = document.getElementById('game-status-msg');
+const dealerCards = document.getElementById('dealer-cards');
+const dealerScoreBadge = document.getElementById('dealer-score-badge');
+
+const bettingControls = document.getElementById('betting-controls');
+const gameplayControls = document.getElementById('gameplay-controls');
+const lobbyControls = document.getElementById('lobby-controls');
+const btnStartGame = document.getElementById('btn-start-game');
+const btnPlaceBet = document.getElementById('btn-place-bet');
+const btnClearBet = document.getElementById('btn-clear-bet');
+const currentBetVal = document.getElementById('current-bet-val');
+
+const btnHit = document.getElementById('btn-action-hit');
+const btnStand = document.getElementById('btn-action-stand');
+const btnDouble = document.getElementById('btn-action-double');
+
+// Suit Symbols Mapping
+const SUIT_SYMBOLS = { H: '♥', D: '♦', C: '♣', S: '♠' };
+const SUIT_NAMES = { H: 'red', D: 'red', C: 'black', S: 'black' };
+
+// Initialize Sound Synthesis
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+// Chip sound (Metallic clink)
+function playChipSound() {
+    if (!audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(2500, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1500, audioCtx.currentTime + 0.08);
+    
+    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+    
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.08);
+}
+
+// Card sound (slide and snap)
+function playCardSound() {
+    if (!audioCtx) return;
+    const bufferSize = audioCtx.sampleRate * 0.12;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+    }
+    
+    const noise = audioCtx.createBufferSource();
+    noise.buffer = buffer;
+    
+    const filter = audioCtx.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.setValueAtTime(800, audioCtx.currentTime);
+    filter.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+    
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+    
+    noise.connect(filter);
+    filter.connect(gain);
+    gain.connect(audioCtx.destination);
+    noise.start();
+}
+
+// Win sound (Happy chime)
+function playWinSound() {
+    if (!audioCtx) return;
+    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6 arpeggio
+    notes.forEach((freq, i) => {
+        setTimeout(() => {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.value = freq;
+            gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.25);
+        }, i * 80);
+    });
+}
+
+// Connect to WS server
+function connect() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    socket = new WebSocket(`${protocol}//${window.location.host}`);
+    
+    socket.onopen = () => {
+        console.log('Connected to server');
+    };
+    
+    socket.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        
+        switch (data.type) {
+            case 'room_joined':
+                myRoomCode = data.roomCode;
+                myId = data.playerId;
+                mySeat = data.seat;
+                lobbyScreen.style.display = 'none';
+                tableScreen.style.display = 'flex';
+                roomCodeDisplay.innerText = myRoomCode;
+                break;
+                
+            case 'room_state':
+                renderState(data.room);
+                break;
+                
+            case 'error':
+                lobbyError.innerText = data.message;
+                break;
+        }
+    };
+    
+    socket.onclose = () => {
+        console.log('Disconnected from server');
+        lobbyScreen.style.display = 'flex';
+        tableScreen.style.display = 'none';
+    };
+}
+
+// Lobby actions
+btnCreateRoom.addEventListener('click', () => {
+    initAudio();
+    const name = playerNameInput.value.trim() || 'Player 1';
+    if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'create_room', playerName: name }));
+    }
+});
+
+btnJoinRoom.addEventListener('click', () => {
+    initAudio();
+    const name = playerNameInput.value.trim() || 'Giocatore';
+    const code = roomCodeInput.value.trim();
+    if (code.length === 4 && socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'join_room', roomCode: code, playerName: name }));
+    } else {
+        lobbyError.innerText = 'Inserisci un codice a 4 cifre';
+    }
+});
+
+btnLeaveRoom.addEventListener('click', () => {
+    if (socket) {
+        socket.close();
+        // Reconnect so lobby is active
+        connect();
+    }
+});
+
+// Betting actions
+document.querySelectorAll('.chip').forEach(chip => {
+    chip.addEventListener('click', () => {
+        playChipSound();
+        const val = parseInt(chip.getAttribute('data-value'));
+        currentBet += val;
+        currentBetVal.innerText = `$${currentBet}`;
+    });
+});
+
+btnClearBet.addEventListener('click', () => {
+    currentBet = 0;
+    currentBetVal.innerText = `$0`;
+});
+
+btnPlaceBet.addEventListener('click', () => {
+    if (currentBet <= 0) return;
+    socket.send(JSON.stringify({ type: 'place_bet', betAmount: currentBet }));
+});
+
+btnStartGame.addEventListener('click', () => {
+    socket.send(JSON.stringify({ type: 'start_round' }));
+});
+
+// In-game decisions
+btnHit.addEventListener('click', () => {
+    socket.send(JSON.stringify({ type: 'action', actionType: 'hit' }));
+});
+
+btnStand.addEventListener('click', () => {
+    socket.send(JSON.stringify({ type: 'action', actionType: 'stand' }));
+});
+
+btnDouble.addEventListener('click', () => {
+    socket.send(JSON.stringify({ type: 'action', actionType: 'double' }));
+});
+
+// Render the synced game state from server
+let prevDealerCardCount = 0;
+let prevPlayerCardCounts = {};
+
+function renderState(room) {
+    roomState = room.state;
+    
+    // Status text
+    updateStatusMessage(room);
+
+    // Render Dealer
+    renderDealerHand(room);
+
+    // Render 4 Player Slots
+    renderPlayerSlots(room);
+
+    // Update controls visibilities
+    updateControlsVisibility(room);
+}
+
+function updateStatusMessage(room) {
+    if (room.state === 'lobby') {
+        gameStatusMsg.innerText = 'In attesa dei giocatori...';
+    } else if (room.state === 'betting') {
+        // Find if local player has placed bet
+        const me = room.players.find(p => p.id === myId);
+        if (me && me.bet > 0) {
+            gameStatusMsg.innerText = 'In attesa delle scommesse altrui...';
+        } else {
+            gameStatusMsg.innerText = 'Fai la tua puntata!';
+        }
+    } else if (room.state === 'player_turn') {
+        const active = room.players.find(p => p.seat === room.activeSeat);
+        if (active) {
+            if (active.id === myId) {
+                gameStatusMsg.innerText = 'È il tuo turno! Scegli la mossa.';
+            } else {
+                gameStatusMsg.innerText = `Turno di ${active.name}...`;
+            }
+        }
+    } else if (room.state === 'dealer_turn') {
+        gameStatusMsg.innerText = 'Il Banco gioca le sue carte...';
+    } else if (room.state === 'round_over') {
+        gameStatusMsg.innerText = 'Mano terminata. Confronto punteggi...';
+    }
+}
+
+function renderDealerHand(room) {
+    // Check if new card was dealt to play card deal sound
+    if (room.dealerHand.length > prevDealerCardCount) {
+        if (roomState !== 'lobby') playCardSound();
+        prevDealerCardCount = room.dealerHand.length;
+    } else if (room.dealerHand.length === 0) {
+        prevDealerCardCount = 0;
+    }
+
+    dealerCards.innerHTML = '';
+    room.dealerHand.forEach(card => {
+        dealerCards.appendChild(createCardElement(card));
+    });
+    
+    if (room.dealerHand.length > 0) {
+        dealerScoreBadge.style.display = 'block';
+        dealerScoreBadge.innerText = room.dealerScore;
+    } else {
+        dealerScoreBadge.style.display = 'none';
+    }
+}
+
+function renderPlayerSlots(room) {
+    // Initialize list of slots
+    for (let s = 1; s <= 4; s++) {
+        const slot = document.getElementById(`slot-${s}`);
+        const emptyEl = slot.querySelector('.slot-empty');
+        const cardEl = slot.querySelector('.slot-player-card');
+        
+        // Find player in this seat
+        const p = room.players.find(player => player.seat === s);
+        
+        if (!p) {
+            emptyEl.style.display = 'flex';
+            cardEl.style.display = 'none';
+            delete prevPlayerCardCounts[s];
+        } else {
+            emptyEl.style.display = 'none';
+            cardEl.style.display = 'flex';
+            
+            // Highlight active player
+            if (room.state === 'player_turn' && room.activeSeat === s) {
+                cardEl.classList.add('active-turn');
+            } else {
+                cardEl.classList.remove('active-turn');
+            }
+
+            // Fill text
+            cardEl.querySelector('.player-name').innerText = p.name + (p.id === myId ? ' (Tu)' : '');
+            cardEl.querySelector('.player-chips').innerText = `$${p.chips}`;
+            
+            // Bet Display
+            const betEl = cardEl.querySelector('.player-bet-badge');
+            if (p.bet > 0) {
+                betEl.style.display = 'block';
+                betEl.innerText = `Bet: $${p.bet}`;
+            } else {
+                betEl.style.display = 'none';
+            }
+
+            // Sound check for dealt cards
+            if (p.hand.length > (prevPlayerCardCounts[s] || 0)) {
+                if (roomState !== 'lobby') playCardSound();
+                prevPlayerCardCounts[s] = p.hand.length;
+            } else if (p.hand.length === 0) {
+                prevPlayerCardCounts[s] = 0;
+            }
+
+            // Render hand
+            const handLayout = cardEl.querySelector('.cards-layout');
+            handLayout.innerHTML = '';
+            p.hand.forEach(card => {
+                handLayout.appendChild(createCardElement(card));
+            });
+
+            // Score Badge
+            const scoreEl = cardEl.querySelector('.score-badge');
+            if (p.hand.length > 0) {
+                scoreEl.style.display = 'block';
+                scoreEl.innerText = p.score;
+            } else {
+                scoreEl.style.display = 'none';
+            }
+
+            // Win / Bust Status Tags
+            const statusTag = cardEl.querySelector('.player-status-tag');
+            statusTag.style.display = 'none';
+            statusTag.className = 'player-status-tag'; // reset class
+
+            if (p.isBusted) {
+                statusTag.style.display = 'block';
+                statusTag.innerText = 'BUST';
+            } else if (room.state === 'round_over' && p.bet === 0) {
+                // Determine win / lose
+                const dScore = room.dealerScore;
+                const pScore = p.score;
+                
+                if (pScore <= 21) {
+                    if (dScore > 21 || pScore > dScore) {
+                        statusTag.style.display = 'block';
+                        if (p.hand.length === 2 && pScore === 21) {
+                            statusTag.classList.add('blackjack');
+                            statusTag.innerText = 'BLACKJACK';
+                        } else {
+                            statusTag.classList.add('win');
+                            statusTag.innerText = 'VINCE';
+                        }
+                        // Play win chime once if it is local player
+                        if (p.id === myId && p.hand.length > 0) {
+                            p.hand = []; // prevent repeat
+                            playWinSound();
+                        }
+                    } else if (pScore === dScore) {
+                        statusTag.style.display = 'block';
+                        statusTag.classList.add('push');
+                        statusTag.innerText = 'PATTA';
+                    }
+                }
+            } else if (p.hasStood) {
+                statusTag.style.display = 'block';
+                statusTag.innerText = 'STÀ';
+            }
+        }
+    }
+}
+
+function updateControlsVisibility(room) {
+    const me = room.players.find(p => p.id === myId);
+    
+    // Default hide all controls
+    bettingControls.style.display = 'none';
+    gameplayControls.style.display = 'none';
+    lobbyControls.style.display = 'none';
+    btnStartGame.style.display = 'none';
+    
+    if (room.state === 'lobby') {
+        lobbyControls.style.display = 'flex';
+        // Only Room Host (first connected player) can start the game
+        if (room.players[0] && room.players[0].id === myId) {
+            btnStartGame.style.display = 'block';
+        }
+    } else if (room.state === 'betting') {
+        if (me && me.bet === 0) {
+            bettingControls.style.display = 'flex';
+        } else {
+            lobbyControls.style.display = 'flex';
+            document.querySelector('.waiting-text').innerText = 'Attendi che gli altri scommettano...';
+        }
+    } else if (room.state === 'player_turn') {
+        if (room.activeSeat === mySeat) {
+            gameplayControls.style.display = 'flex';
+            // Disable double if player doesn't have enough chips
+            if (me.chips < me.bet) {
+                btnDouble.disabled = true;
+            } else {
+                btnDouble.disabled = false;
+            }
+        }
+    }
+}
+
+// Card DOM Creator Helper
+function createCardElement(card) {
+    const cardDiv = document.createElement('div');
+    
+    if (card.value === 'hidden') {
+        cardDiv.className = 'card back';
+        return cardDiv;
+    }
+    
+    const isRed = SUIT_NAMES[card.suit] === 'red';
+    cardDiv.className = `card ${isRed ? 'red' : 'black'}`;
+    
+    const suitSymbol = SUIT_SYMBOLS[card.suit];
+    
+    cardDiv.innerHTML = `
+        <div class="card-top">${card.value}<br>${suitSymbol}</div>
+        <div class="card-center">${suitSymbol}</div>
+        <div class="card-bottom">${card.value}<br>${suitSymbol}</div>
+    `;
+    
+    return cardDiv;
+}
+
+// Connect automatically on load
+window.onload = connect;

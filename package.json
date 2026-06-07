@@ -1,0 +1,13 @@
+{
+  "name": "blackjack-online",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Online Multiplayer Blackjack with WebSockets",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}
