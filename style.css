@@ -60,7 +60,7 @@
     position: relative;
     transform-style: preserve-3d;
     backface-visibility: hidden;
-    animation: deal-card 0.65s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: deal-card 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
     transform-origin: center center;
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }

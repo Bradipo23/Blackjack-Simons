@@ -265,21 +265,27 @@ function updateStatusMessage(room) {
 }
 
 function renderDealerHand(room) {
+    let prevCount = prevDealerCardCount;
     // Check if new card was dealt to play card deal sound
     if (room.dealerHand.length > prevDealerCardCount) {
         if (roomState !== 'lobby') playCardSound();
         prevDealerCardCount = room.dealerHand.length;
     } else if (room.dealerHand.length === 0) {
         prevDealerCardCount = 0;
+        prevCount = 0;
     }
 
     dealerCards.innerHTML = '';
     const totalDealerCards = room.dealerHand.length;
     room.dealerHand.forEach((card, index) => {
         const cardEl = createCardElement(card, 'dealer');
-        // Do not animate previous dealer cards unless we are dealing the initial round
-        if (room.state !== 'dealing' && index < totalDealerCards - 1) {
+        // Do not animate previous dealer cards
+        if (index < prevCount) {
             cardEl.classList.add('no-deal-animate');
+        } else {
+            // Stagger animation for new cards
+            const delay = (index - prevCount) * 150;
+            cardEl.style.animationDelay = `${delay}ms`;
         }
         
         let tx = 0;
@@ -349,11 +355,13 @@ function renderPlayerSlots(room) {
             }
 
             // Sound check for dealt cards
-            if (p.hand.length > (prevPlayerCardCounts[s] || 0)) {
+            let prevCount = prevPlayerCardCounts[s] || 0;
+            if (p.hand.length > prevCount) {
                 if (roomState !== 'lobby') playCardSound();
                 prevPlayerCardCounts[s] = p.hand.length;
             } else if (p.hand.length === 0) {
                 prevPlayerCardCounts[s] = 0;
+                prevCount = 0;
             }
 
             // Render hand
@@ -365,8 +373,12 @@ function renderPlayerSlots(room) {
                 const cardEl = createCardElement(card, 'player', s);
                 
                 // Disable deal animation for cards already in hand
-                if (index < totalCards - 1) {
+                if (index < prevCount) {
                     cardEl.classList.add('no-deal-animate');
+                } else {
+                    // Stagger animation for new cards
+                    const delay = (index - prevCount) * 150;
+                    cardEl.style.animationDelay = `${delay}ms`;
                 }
                 
                 let tx = 0;
