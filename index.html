@@ -1,175 +1,358 @@
 <!DOCTYPE html>
-<html lang="it">
+<html class="dark" lang="it">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Los Banditos Ciciones - Blackjack Club</title>
+    <!-- Tailwind CSS and M3 fonts -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Outfit:wght@300;400;600;800&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "on-primary-fixed": "#002117",
+                "surface-container-highest": "#353534",
+                "surface-container-low": "#1c1b1b",
+                "on-background": "#e5e2e1",
+                "surface-container": "#201f1f",
+                "tertiary-container": "#584000",
+                "on-tertiary": "#402d00",
+                "on-primary-container": "#80bea6",
+                "tertiary": "#f9bd22",
+                "primary-fixed": "#b0f0d6",
+                "tertiary-fixed": "#ffdf9f",
+                "on-surface": "#e5e2e1",
+                "surface-bright": "#393939",
+                "on-secondary-container": "#e5ffe9",
+                "inverse-on-surface": "#313030",
+                "surface-container-lowest": "#0e0e0e",
+                "on-secondary-fixed": "#00210f",
+                "on-tertiary-container": "#e0a800",
+                "on-secondary-fixed-variant": "#00522d",
+                "error-container": "#93000a",
+                "background": "#131313",
+                "on-error-container": "#ffdad6",
+                "primary": "#95d3ba",
+                "secondary-fixed-dim": "#73db9a",
+                "on-primary": "#003829",
+                "tertiary-fixed-dim": "#f9bd22",
+                "inverse-primary": "#2b6954",
+                "outline-variant": "#404944",
+                "surface-container-high": "#2a2a2a",
+                "on-tertiary-fixed": "#261a00",
+                "surface": "#131313",
+                "secondary": "#73db9a",
+                "on-surface-variant": "#bfc9c3",
+                "on-secondary": "#00391d",
+                "on-primary-fixed-variant": "#0b513d",
+                "secondary-fixed": "#8ff8b4",
+                "surface-tint": "#95d3ba",
+                "inverse-surface": "#e5e2e1",
+                "error": "#ffb4ab",
+                "on-tertiary-fixed-variant": "#5c4300",
+                "outline": "#89938d",
+                "primary-container": "#064e3b",
+                "primary-fixed-dim": "#95d3ba",
+                "secondary-container": "#00834b",
+                "surface-variant": "#353534",
+                "on-error": "#690005",
+                "surface-dim": "#131313"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.25rem",
+                "lg": "8px",
+                "xl": "12px",
+                "2xl": "16px",
+                "3xl": "28px",
+                "full": "9999px"
+            }
+          }
+        }
+      }
+    </script>
 </head>
-<body>
-    <div id="app">
-        <!-- 1. LOBBY SCREEN -->
-        <div id="lobby-screen" class="screen">
-            <div class="lobby-card glass">
-                <div class="logo-area">
-                    <img src="logo.png" alt="Los Banditos Ciciones" class="lobby-logo-img">
-                    <h1>Los Banditos Ciciones</h1>
-                    <div class="subtitle">Blackjack Club</div>
-                </div>
-                
-                <div class="input-group">
-                    <label for="player-name">Tuo Nome</label>
-                    <input type="text" id="player-name" placeholder="Es. Mario" maxlength="12">
-                </div>
+<body class="bg-background text-on-background font-sans overflow-hidden h-screen select-none">
 
-                <div class="lobby-actions">
-                    <button id="btn-create-room" class="btn btn-primary">Crea Nuova Stanza</button>
-                    
-                    <div class="divider"><span>oppure entra in una</span></div>
-                    
-                    <div class="join-group">
-                        <input type="text" id="room-code-input" placeholder="Codice Stanza (4 cifre)" maxlength="4">
-                        <button id="btn-join-room" class="btn btn-secondary">Entra</button>
+    <!-- Blurred Background Lounge (M3 Ambient Style) -->
+    <div class="fixed inset-0 z-0">
+        <img class="w-full h-full object-cover blur-3xl opacity-15 scale-110" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAl8zlZgFIUzHmK-VIB-7gXEf51253P03gozg18zGsF119E-PwaG1HzHpVKyyKHCqBx0wPGPXvcXhn7igIHCMdh_-FhsGzmaE7zp6cEb5uz-ZLzJ9AV3miMwZyckQfqeWZgp_di9kysgkus1KMMb_5-Y5uF3ZfVgqODP16iKaYUzwULbSSujFvsMJ-L_bgolM3qmELGvXhXDlkIrbkyAjOxaM8QAdXX55o7sLGAQFzfBx6bWRyDju2qfFYGaFL7MhO83Jv0ykmqr9M"/>
+    </div>
+
+    <div id="app" class="relative z-10 w-full h-full flex flex-col">
+
+        <!-- ================= LOBBY SCREEN ================= -->
+        <div id="lobby-screen" class="screen w-full h-full flex flex-col">
+            <!-- Top Navigation Bar -->
+            <header class="bg-surface-container-low border-b border-outline-variant/30 h-16 flex justify-between items-center px-8 shrink-0">
+                <div class="flex items-center gap-4">
+                    <img src="logo.png" alt="Logo" class="w-9 h-9 rounded-full border border-gold object-cover">
+                    <h1 class="text-title-lg font-bold text-primary tracking-tight">LOS BANDITOS CICIONES</h1>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="bg-surface-container-high px-4 py-1.5 rounded-full flex items-center gap-2 border border-outline-variant">
+                        <span class="material-symbols-outlined text-secondary text-sm" style="font-variation-settings: 'FILL' 1;">account_balance_wallet</span>
+                        <span class="font-semibold text-on-surface">$1,000</span>
                     </div>
-                </div>
-                
-                <div id="lobby-error" class="error-text"></div>
-            </div>
-        </div>
-
-        <!-- 2. GAME TABLE SCREEN -->
-        <div id="table-screen" class="screen" style="display: none;">
-            <!-- Top bar with game state, room code -->
-            <header class="table-header">
-                <div class="header-left">
-                    <span class="room-label">Stanza:</span>
-                    <span id="room-code-display" class="room-code">----</span>
-                </div>
-                <div class="header-center">
-                    <div id="game-status-msg" class="status-msg">In attesa dei giocatori...</div>
-                </div>
-                <div class="header-right">
-                    <button id="btn-leave-room" class="btn btn-danger btn-sm">Esci</button>
                 </div>
             </header>
 
-            <!-- Virtual Felt Table -->
-            <div class="blackjack-table">
-                <!-- Dealer Area -->
-                <div class="dealer-section">
-                    <div class="dealer-label">BANCO (Stands on 17)</div>
-                    <div class="dealer-hand-container">
-                        <div id="dealer-cards" class="cards-layout"></div>
-                        <div id="dealer-score-badge" class="score-badge" style="display:none;">0</div>
+            <!-- Main Content Area (Two Columns) -->
+            <main class="flex-1 overflow-y-auto p-8 max-w-[1400px] mx-auto w-full flex flex-col lg:flex-row gap-8 items-center lg:items-stretch justify-center">
+                <!-- Left Column: Room Action Card -->
+                <div class="w-full lg:w-1/2 flex flex-col justify-center max-w-[500px]">
+                    <div class="bg-surface-container-low border border-outline-variant rounded-3xl p-8 shadow-xl flex flex-col gap-6 m3-elevation-2">
+                        <div class="text-center">
+                            <h2 class="text-headline-lg font-bold text-on-surface">Blackjack Club</h2>
+                            <p class="text-body-md text-on-surface-variant mt-1">Crea una nuova stanza o inserisci il codice per giocare con i tuoi amici.</p>
+                        </div>
+
+                        <!-- Name Input -->
+                        <div class="flex flex-col gap-2">
+                            <label for="player-name" class="text-xs uppercase tracking-wider text-outline font-semibold">Tuo Nome</label>
+                            <input type="text" id="player-name" placeholder="Es. Mario" maxlength="12" class="w-full bg-surface-container-highest border border-outline-variant rounded-xl px-4 py-3 text-on-surface placeholder:text-outline focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all">
+                        </div>
+
+                        <div class="flex flex-col gap-4">
+                            <!-- Create Room Button -->
+                            <button id="btn-create-room" class="w-full h-12 bg-primary text-on-primary font-semibold rounded-full hover:shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
+                                <span class="material-symbols-outlined">add</span> Crea Nuova Stanza
+                            </button>
+
+                            <div class="flex items-center text-outline text-xs uppercase tracking-wider my-1">
+                                <span class="flex-1 h-[1px] bg-outline-variant/30"></span>
+                                <span class="px-3">oppure entra in una</span>
+                                <span class="flex-1 h-[1px] bg-outline-variant/30"></span>
+                            </div>
+
+                            <!-- Join Group -->
+                            <div class="flex gap-2">
+                                <input type="text" id="room-code-input" placeholder="Codice (4 cifre)" maxlength="4" class="flex-1 bg-surface-container-highest border border-outline-variant rounded-xl px-4 py-3 text-center tracking-widest font-mono text-on-surface placeholder:text-outline focus:border-secondary outline-none transition-all">
+                                <button id="btn-join-room" class="h-12 px-6 bg-surface-container-high text-on-surface border border-outline-variant font-semibold rounded-xl hover:bg-surface-variant active:scale-95 transition-all">
+                                    Entra
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Error display -->
+                        <div id="lobby-error" class="text-error text-center text-sm font-semibold min-h-[20px]"></div>
                     </div>
                 </div>
 
-                <!-- Center Area: Deck Shoe and Room Info -->
-                <div class="table-center">
-                    <div class="felt-logo-container">
-                        <img src="logo.png" alt="Los Banditos Ciciones" class="felt-logo-img">
-                        <div class="felt-logo-text">Los Banditos Ciciones</div>
-                    </div>
-                    <div class="deck-shoe">
-                        <div class="deck-card-back"></div>
-                    </div>
-                </div>
+                <!-- Right Column: Decorative Live Tables -->
+                <div class="w-full lg:w-1/2 flex flex-col justify-center max-w-[500px]">
+                    <div class="space-y-4">
+                        <h3 class="text-xs uppercase tracking-widest text-primary font-bold px-1">Tavoli Disponibili</h3>
+                        
+                        <!-- Table 1 -->
+                        <div class="bg-surface-container-low border border-outline-variant rounded-2xl p-5 flex justify-between items-center m3-elevation-1">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-primary-container text-on-primary-container flex items-center justify-center">
+                                    <span class="material-symbols-outlined">casino</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-on-surface">Beginner's Luck</h4>
+                                    <p class="text-xs text-on-surface-variant">Stakes: $10 - $100 • Standard Play</p>
+                                </div>
+                            </div>
+                            <span class="text-xs bg-surface-container-highest px-3 py-1 rounded-full text-on-surface-variant">Attivo</span>
+                        </div>
 
-                <!-- Players Slots (arranged dynamically) -->
-                <div class="players-section">
-                    <!-- Player Slot 1 -->
-                    <div class="player-slot" id="slot-1">
-                        <div class="slot-empty">Posto Libero</div>
-                        <div class="slot-player-card glass" style="display:none;">
-                            <div class="player-name">Giocatore 1</div>
-                            <div class="player-chips">$1000</div>
-                            <div class="cards-layout"></div>
-                            <div class="score-badge">0</div>
-                            <div class="player-bet-badge" style="display:none;">$0</div>
-                            <div class="player-status-tag" style="display:none;">STAND</div>
+                        <!-- Table 2 -->
+                        <div class="bg-surface-container-low border border-outline-variant rounded-2xl p-5 flex justify-between items-center m3-elevation-1">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-tertiary-container text-on-tertiary-container flex items-center justify-center">
+                                    <span class="material-symbols-outlined">workspace_premium</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-on-surface">The Executive</h4>
+                                    <p class="text-xs text-on-surface-variant">Stakes: $100 - $500 • VIP Lounge</p>
+                                </div>
+                            </div>
+                            <span class="text-xs bg-tertiary-container/30 px-3 py-1 rounded-full text-tertiary font-bold">Popolare</span>
+                        </div>
+
+                        <!-- Table 3 -->
+                        <div class="bg-surface-container-low border border-outline-variant rounded-2xl p-5 flex justify-between items-center m3-elevation-1">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-xl bg-surface-container-highest text-outline flex items-center justify-center">
+                                    <span class="material-symbols-outlined">military_tech</span>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-on-surface">Grandmaster</h4>
+                                    <p class="text-xs text-on-surface-variant">Stakes: $1,000+ • Pro High-Stakes</p>
+                                </div>
+                            </div>
+                            <span class="text-xs bg-surface-container-highest px-3 py-1 rounded-full text-outline">Privato</span>
                         </div>
                     </div>
+                </div>
+            </main>
+        </div>
+
+
+        <!-- ================= GAME TABLE SCREEN ================= -->
+        <div id="table-screen" class="screen w-full h-full flex flex-col" style="display: none;">
+            <!-- Top bar -->
+            <header class="bg-surface-container-low border-b border-outline-variant/30 h-16 flex justify-between items-center px-8 shrink-0 z-20">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs uppercase tracking-wider text-outline">Stanza:</span>
+                    <span id="room-code-display" class="font-mono text-xl font-bold text-primary tracking-widest bg-surface-container-highest px-3 py-1 rounded-lg">----</span>
+                </div>
+                <div class="flex-1 flex justify-center px-4">
+                    <div id="game-status-msg" class="text-base text-on-surface font-medium tracking-wide text-center">In attesa dei giocatori...</div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <button id="btn-leave-room" class="h-10 px-4 bg-error-container text-on-error-container font-semibold rounded-full hover:bg-error active:scale-95 transition-all text-xs uppercase tracking-wider">
+                        Esci
+                    </button>
+                </div>
+            </header>
+
+            <!-- Game Felt Table -->
+            <main class="flex-1 p-6 flex items-center justify-center overflow-hidden relative">
+                
+                <!-- The Green Felt Surface -->
+                <div class="felt-texture w-full max-w-[1250px] h-full max-h-[700px] rounded-[320px_320px_80px_80px] border-[14px] border-surface-container-highest shadow-[0_40px_80px_-20px_rgba(0,0,0,0.85)] flex flex-col justify-between py-10 relative overflow-hidden">
                     
-                    <!-- Player Slot 2 -->
-                    <div class="player-slot" id="slot-2">
-                        <div class="slot-empty">Posto Libero</div>
-                        <div class="slot-player-card glass" style="display:none;">
-                            <div class="player-name">Giocatore 2</div>
-                            <div class="player-chips">$1000</div>
-                            <div class="cards-layout"></div>
-                            <div class="score-badge">0</div>
-                            <div class="player-bet-badge" style="display:none;">$0</div>
-                            <div class="player-status-tag" style="display:none;">STAND</div>
+                    <!-- Table Border Gold Highlight -->
+                    <div class="absolute inset-1 border border-secondary/10 rounded-[306px_306px_66px_66px] pointer-events-none"></div>
+
+                    <!-- 1. Dealer Section -->
+                    <div class="dealer-section flex flex-col items-center gap-3 z-10 shrink-0">
+                        <span class="text-[10px] text-primary font-bold uppercase tracking-[0.3em]">Dealer Stands on 17</span>
+                        <div class="dealer-hand-container relative flex justify-center gap-3 min-h-[100px]">
+                            <div id="dealer-cards" class="cards-layout flex justify-center"></div>
+                            <div id="dealer-score-badge" class="score-badge bg-surface-container-highest/90 text-on-surface font-semibold text-xs px-3 py-1 rounded-full border border-outline-variant absolute -bottom-5" style="display:none;">0</div>
                         </div>
                     </div>
 
-                    <!-- Player Slot 3 -->
-                    <div class="player-slot" id="slot-3">
-                        <div class="slot-empty">Posto Libero</div>
-                        <div class="slot-player-card glass" style="display:none;">
-                            <div class="player-name">Giocatore 3</div>
-                            <div class="player-chips">$1000</div>
-                            <div class="cards-layout"></div>
-                            <div class="score-badge">0</div>
-                            <div class="player-bet-badge" style="display:none;">$0</div>
-                            <div class="player-status-tag" style="display:none;">STAND</div>
+                    <!-- 2. Table Center Brand Logo -->
+                    <div class="table-center flex flex-col items-center justify-center z-0">
+                        <div class="felt-logo-container">
+                            <img src="logo.png" alt="Logo" class="felt-logo-img">
+                            <div class="felt-logo-text">Los Banditos Ciciones</div>
+                        </div>
+                        <div class="deck-shoe mt-4">
+                            <div class="deck-card-back"></div>
                         </div>
                     </div>
 
-                    <!-- Player Slot 4 -->
-                    <div class="player-slot" id="slot-4">
-                        <div class="slot-empty">Posto Libero</div>
-                        <div class="slot-player-card glass" style="display:none;">
-                            <div class="player-name">Giocatore 4</div>
-                            <div class="player-chips">$1000</div>
-                            <div class="cards-layout"></div>
-                            <div class="score-badge">0</div>
-                            <div class="player-bet-badge" style="display:none;">$0</div>
-                            <div class="player-status-tag" style="display:none;">STAND</div>
+                    <!-- 3. Players Slots Section (4 seats) -->
+                    <div class="players-section grid grid-cols-2 lg:grid-cols-4 gap-4 w-full px-8 z-10 shrink-0">
+                        <!-- Player Slot 1 -->
+                        <div class="player-slot flex flex-col items-center min-h-[180px] relative w-full" id="slot-1">
+                            <div class="slot-empty border-2 border-dashed border-outline-variant/30 rounded-2xl p-4 flex items-center justify-center text-on-surface-variant/30 font-bold uppercase tracking-wider text-xs min-h-[140px] w-full">Posto Libero</div>
+                            <div class="slot-player-card bg-surface-container-low border border-outline-variant rounded-2xl p-4 flex flex-col items-center gap-2 m3-elevation-2 relative transition-all duration-300 w-full" style="display:none;">
+                                <div class="player-name font-bold text-on-surface text-base truncate max-w-full">Giocatore 1</div>
+                                <div class="player-chips font-mono text-sm text-secondary font-bold mb-1">$1000</div>
+                                <div class="cards-layout flex justify-center min-h-[80px] relative w-full"></div>
+                                <div class="score-badge bg-surface-container-highest/90 text-on-surface font-semibold text-xs px-3 py-1 rounded-full border border-outline-variant mt-2">0</div>
+                                <div class="player-bet-badge absolute -top-4 bg-tertiary-container text-tertiary px-3 py-1 rounded-full text-xs font-semibold border border-tertiary/20" style="display:none;">$0</div>
+                                <div class="player-status-tag" style="display:none;">STAND</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Player Slot 2 -->
+                        <div class="player-slot flex flex-col items-center min-h-[180px] relative w-full" id="slot-2">
+                            <div class="slot-empty border-2 border-dashed border-outline-variant/30 rounded-2xl p-4 flex items-center justify-center text-on-surface-variant/30 font-bold uppercase tracking-wider text-xs min-h-[140px] w-full">Posto Libero</div>
+                            <div class="slot-player-card bg-surface-container-low border border-outline-variant rounded-2xl p-4 flex flex-col items-center gap-2 m3-elevation-2 relative transition-all duration-300 w-full" style="display:none;">
+                                <div class="player-name font-bold text-on-surface text-base truncate max-w-full">Giocatore 2</div>
+                                <div class="player-chips font-mono text-sm text-secondary font-bold mb-1">$1000</div>
+                                <div class="cards-layout flex justify-center min-h-[80px] relative w-full"></div>
+                                <div class="score-badge bg-surface-container-highest/90 text-on-surface font-semibold text-xs px-3 py-1 rounded-full border border-outline-variant mt-2">0</div>
+                                <div class="player-bet-badge absolute -top-4 bg-tertiary-container text-tertiary px-3 py-1 rounded-full text-xs font-semibold border border-tertiary/20" style="display:none;">$0</div>
+                                <div class="player-status-tag" style="display:none;">STAND</div>
+                            </div>
+                        </div>
+
+                        <!-- Player Slot 3 -->
+                        <div class="player-slot flex flex-col items-center min-h-[180px] relative w-full" id="slot-3">
+                            <div class="slot-empty border-2 border-dashed border-outline-variant/30 rounded-2xl p-4 flex items-center justify-center text-on-surface-variant/30 font-bold uppercase tracking-wider text-xs min-h-[140px] w-full">Posto Libero</div>
+                            <div class="slot-player-card bg-surface-container-low border border-outline-variant rounded-2xl p-4 flex flex-col items-center gap-2 m3-elevation-2 relative transition-all duration-300 w-full" style="display:none;">
+                                <div class="player-name font-bold text-on-surface text-base truncate max-w-full">Giocatore 3</div>
+                                <div class="player-chips font-mono text-sm text-secondary font-bold mb-1">$1000</div>
+                                <div class="cards-layout flex justify-center min-h-[80px] relative w-full"></div>
+                                <div class="score-badge bg-surface-container-highest/90 text-on-surface font-semibold text-xs px-3 py-1 rounded-full border border-outline-variant mt-2">0</div>
+                                <div class="player-bet-badge absolute -top-4 bg-tertiary-container text-tertiary px-3 py-1 rounded-full text-xs font-semibold border border-tertiary/20" style="display:none;">$0</div>
+                                <div class="player-status-tag" style="display:none;">STAND</div>
+                            </div>
+                        </div>
+
+                        <!-- Player Slot 4 -->
+                        <div class="player-slot flex flex-col items-center min-h-[180px] relative w-full" id="slot-4">
+                            <div class="slot-empty border-2 border-dashed border-outline-variant/30 rounded-2xl p-4 flex items-center justify-center text-on-surface-variant/30 font-bold uppercase tracking-wider text-xs min-h-[140px] w-full">Posto Libero</div>
+                            <div class="slot-player-card bg-surface-container-low border border-outline-variant rounded-2xl p-4 flex flex-col items-center gap-2 m3-elevation-2 relative transition-all duration-300 w-full" style="display:none;">
+                                <div class="player-name font-bold text-on-surface text-base truncate max-w-full">Giocatore 4</div>
+                                <div class="player-chips font-mono text-sm text-secondary font-bold mb-1">$1000</div>
+                                <div class="cards-layout flex justify-center min-h-[80px] relative w-full"></div>
+                                <div class="score-badge bg-surface-container-highest/90 text-on-surface font-semibold text-xs px-3 py-1 rounded-full border border-outline-variant mt-2">0</div>
+                                <div class="player-bet-badge absolute -top-4 bg-tertiary-container text-tertiary px-3 py-1 rounded-full text-xs font-semibold border border-tertiary/20" style="display:none;">$0</div>
+                                <div class="player-status-tag" style="display:none;">STAND</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            </main>
 
-            <!-- Bottom Control Panel -->
-            <footer class="table-controls">
-                <!-- Betting Phase Controls -->
-                <div id="betting-controls" class="controls-group" style="display:none;">
-                    <div class="bet-label">Scegli la tua Puntata:</div>
-                    <div class="chips-container">
-                        <button class="chip chip-10" data-value="10">$10</button>
-                        <button class="chip chip-25" data-value="25">$25</button>
-                        <button class="chip chip-50" data-value="50">$50</button>
-                        <button class="chip chip-100" data-value="100">$100</button>
-                        <button class="chip chip-500" data-value="500">$500</button>
+            <!-- Bottom HUD Control Panels -->
+            <footer class="bg-gradient-to-t from-background via-background/95 to-transparent py-6 px-8 flex justify-center items-center shrink-0 z-20">
+                <div class="w-full max-w-[700px] flex flex-col items-center gap-4">
+                    
+                    <!-- A. Betting Phase Controls -->
+                    <div id="betting-controls" class="w-full flex flex-col items-center gap-3 animate-[fadeIn_0.3s_ease]" style="display:none;">
+                        <span class="text-xs uppercase tracking-wider text-outline font-semibold">Piazza la tua puntata</span>
+                        
+                        <!-- M3 Chip Selector -->
+                        <div class="flex gap-3 px-5 py-2.5 bg-surface-container-high rounded-full border border-outline-variant m3-elevation-2">
+                            <button class="chip chip-10 w-11 h-11 rounded-full text-xs font-bold transition-all hover:scale-110 m3-elevation-1" data-value="10">$10</button>
+                            <button class="chip chip-25 w-11 h-11 rounded-full text-xs font-bold transition-all hover:scale-110 m3-elevation-1" data-value="25">$25</button>
+                            <button class="chip chip-50 w-11 h-11 rounded-full text-xs font-bold transition-all hover:scale-110 m3-elevation-1" data-value="50">$50</button>
+                            <button class="chip chip-100 w-11 h-11 rounded-full text-xs font-bold transition-all hover:scale-110 m3-elevation-1" data-value="100">$100</button>
+                            <button class="chip chip-500 w-11 h-11 rounded-full text-xs font-bold transition-all hover:scale-110 m3-elevation-1" data-value="500">$500</button>
+                        </div>
+                        
+                        <div class="flex items-center gap-6 w-full justify-center mt-1">
+                            <span class="text-sm text-on-surface-variant">Puntata: <strong id="current-bet-val" class="font-mono text-secondary text-lg ml-1">$0</strong></span>
+                            <button id="btn-clear-bet" class="h-9 px-4 bg-surface-container-highest border border-outline-variant text-on-surface font-semibold rounded-full text-xs uppercase tracking-wider active:scale-95 transition-all">Cancella</button>
+                            <button id="btn-place-bet" class="h-10 px-6 bg-primary text-on-primary font-bold rounded-full text-xs uppercase tracking-wider hover:shadow-lg active:scale-95 transition-all">Punta</button>
+                        </div>
                     </div>
-                    <div class="bet-action-row">
-                        <span class="current-bet-display">Puntata Corrente: <strong id="current-bet-val">$0</strong></span>
-                        <button id="btn-clear-bet" class="btn btn-secondary btn-sm">Cancella</button>
-                        <button id="btn-place-bet" class="btn btn-primary">Conferma Scommessa</button>
+
+                    <!-- B. Player Turn Decisions Controls -->
+                    <div id="gameplay-controls" class="w-full flex gap-4 justify-center animate-[fadeIn_0.3s_ease]" style="display:none;">
+                        <button id="btn-action-stand" class="flex-1 max-w-[150px] h-12 bg-error-container text-on-error-container rounded-full font-semibold hover:bg-error active:scale-95 transition-all m3-elevation-1 flex items-center justify-center gap-1.5 text-xs uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-sm">back_hand</span> Stai (Stand)
+                        </button>
+                        <button id="btn-action-hit" class="flex-1 max-w-[150px] h-12 bg-primary text-on-primary rounded-full font-bold hover:shadow-lg active:scale-95 transition-all m3-elevation-1 flex items-center justify-center gap-1.5 text-xs uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-sm">add</span> Carta (Hit)
+                        </button>
+                        <button id="btn-action-double" class="flex-1 max-w-[150px] h-12 bg-secondary text-on-secondary rounded-full font-bold hover:shadow-lg active:scale-95 transition-all m3-elevation-1 flex items-center justify-center gap-1.5 text-xs uppercase tracking-wider">
+                            <span class="material-symbols-outlined text-sm">double_arrow</span> Raddoppia
+                        </button>
                     </div>
-                </div>
 
-                <!-- Player Turn Decision Controls -->
-                <div id="gameplay-controls" class="controls-group" style="display:none;">
-                    <button id="btn-action-hit" class="btn btn-action btn-hit">Carta (Hit)</button>
-                    <button id="btn-action-stand" class="btn btn-action btn-stand">Stai (Stand)</button>
-                    <button id="btn-action-double" class="btn btn-action btn-double">Raddoppia (Double)</button>
-                </div>
-
-                <!-- Lobby Waiting Controls -->
-                <div id="lobby-controls" class="controls-group" style="display:none;">
-                    <div class="waiting-text">In attesa che gli altri giocatori si uniscano...</div>
-                    <button id="btn-start-game" class="btn btn-primary" style="display:none;">Inizia Partita</button>
+                    <!-- C. Lobby Waiting & Start Game Controls -->
+                    <div id="lobby-controls" class="w-full flex flex-col items-center gap-3 animate-[fadeIn_0.3s_ease]" style="display:none;">
+                        <div class="waiting-text text-sm text-outline italic">In attesa che gli altri giocatori si uniscano...</div>
+                        <button id="btn-start-game" class="h-12 px-8 bg-primary text-on-primary font-bold rounded-full text-xs uppercase tracking-widest hover:shadow-lg active:scale-95 transition-all flex items-center gap-2" style="display:none;">
+                            <span class="material-symbols-outlined">play_arrow</span> Inizia Partita
+                        </button>
+                    </div>
                 </div>
             </footer>
         </div>
+
     </div>
 
-    <!-- Core Client WS and Game logic -->
+    <!-- Core Client JS Logic -->
     <script src="client.js"></script>
 </body>
 </html>
