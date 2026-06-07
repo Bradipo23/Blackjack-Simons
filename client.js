@@ -274,8 +274,24 @@ function renderDealerHand(room) {
     }
 
     dealerCards.innerHTML = '';
-    room.dealerHand.forEach(card => {
-        dealerCards.appendChild(createCardElement(card, 'dealer'));
+    const totalDealerCards = room.dealerHand.length;
+    room.dealerHand.forEach((card, index) => {
+        const cardEl = createCardElement(card, 'dealer');
+        // Do not animate previous dealer cards unless we are dealing the initial round
+        if (room.state !== 'dealing' && index < totalDealerCards - 1) {
+            cardEl.classList.add('no-deal-animate');
+        }
+        
+        // Fan out the dealer's cards slightly for a natural look!
+        if (totalDealerCards > 1) {
+            const mid = (totalDealerCards - 1) / 2;
+            const angle = (index - mid) * 4; // subtle 4 degrees separation
+            const xOffset = (index - mid) * 12; // spread
+            cardEl.style.transform = `translateX(${xOffset}px) rotate(${angle}deg)`;
+            cardEl.style.marginLeft = '0px';
+        }
+        
+        dealerCards.appendChild(cardEl);
     });
     
     if (room.dealerHand.length > 0) {
@@ -336,8 +352,28 @@ function renderPlayerSlots(room) {
             // Render hand
             const handLayout = cardEl.querySelector('.cards-layout');
             handLayout.innerHTML = '';
-            p.hand.forEach(card => {
-                handLayout.appendChild(createCardElement(card, 'player', s));
+            
+            const totalCards = p.hand.length;
+            p.hand.forEach((card, index) => {
+                const cardEl = createCardElement(card, 'player', s);
+                
+                // Disable deal animation for cards already in hand
+                if (index < totalCards - 1) {
+                    cardEl.classList.add('no-deal-animate');
+                }
+                
+                // Apply fan rotation/offset to simulate holding cards in hand physically
+                if (totalCards > 1) {
+                    const mid = (totalCards - 1) / 2;
+                    const angle = (index - mid) * 8; // 8 degrees separation
+                    const yOffset = Math.abs(index - mid) * 4; // curved vertical arc offset
+                    const xOffset = (index - mid) * 15; // horizontal overlap spread offset
+                    
+                    cardEl.style.transform = `translateX(${xOffset}px) translateY(${yOffset}px) rotate(${angle}deg)`;
+                    cardEl.style.marginLeft = '0px'; // override overlapping margin
+                }
+                
+                handLayout.appendChild(cardEl);
             });
 
             // Timer bar rendering
