@@ -17,6 +17,8 @@ const server = createServer((req, res) => {
             contentType = 'application/javascript';
         } else if (urlPath.endsWith('.css')) {
             contentType = 'text/css';
+        } else if (urlPath.endsWith('.png')) {
+            contentType = 'image/png';
         }
         res.writeHead(200, { 'Content-Type': contentType });
         res.end(readFileSync(urlPath));
@@ -126,8 +128,45 @@ function broadcastToRoom(room) {
     });
 }
 
+// Timer helpers
+function clearTurnTimer(room) {
+    if (room.timerInterval) {
+        clearInterval(room.timerInterval);
+        room.timerInterval = null;
+    }
+    room.timer = null;
+}
+
+function startTurnTimer(room) {
+    clearTurnTimer(room);
+    room.timer = 20;
+    
+    room.timerInterval = setInterval(() => {
+        if (room.state !== 'player_turn') {
+            clearTurnTimer(room);
+            return;
+        }
+        
+        room.timer--;
+        if (room.timer <= 0) {
+            clearTurnTimer(room);
+            // Force Stand for the active player
+            const activePlayer = room.players.find(p => p.seat === room.activeSeat);
+            if (activePlayer) {
+                activePlayer.hasStood = true;
+                nextPlayer(room);
+            }
+        } else {
+            broadcastToRoom(room);
+        }
+    }, 1000);
+    
+    broadcastToRoom(room);
+}
+
 // Handle turn progression
 function nextPlayer(room) {
+    clearTurnTimer(room);
     let currentIdx = room.players.findIndex(p => p.seat === room.activeSeat);
     let foundNext = false;
     
@@ -144,7 +183,7 @@ function nextPlayer(room) {
     }
     
     if (foundNext) {
-        broadcastToRoom(room);
+        startTurnTimer(room);
     } else {
         // All players done, Dealer's turn!
         dealerPlay(room);
@@ -154,6 +193,7 @@ function nextPlayer(room) {
 // Dealer plays its hand
 async function dealerPlay(room) {
     room.state = 'dealer_turn';
+    clearTurnTimer(room);
     broadcastToRoom(room);
     
     // Delay dealer actions for visual pacing
@@ -186,36 +226,46 @@ async function dealerPlay(room) {
 // Settle chips and reset
 function settleRound(room) {
     room.state = 'round_over';
+    clearTurnTimer(room);
     const dealerScore = calculateHandValue(room.dealerHand);
     const dealerBusted = dealerScore > 21;
+    const dealerBJ = room.dealerHand.length === 2 && dealerScore === 21;
     
     room.players.forEach(p => {
         if (p.bet === 0) return;
         
         const playerScore = calculateHandValue(p.hand);
         const playerBusted = playerScore > 21;
+        const playerBJ = p.hand.length === 2 && playerScore === 21;
         
         if (playerBusted) {
             // Player lost (already lost bet)
         } else if (dealerBusted) {
-            // Dealer busted, player wins 1:1 (or 3:2 if Blackjack)
-            if (p.hand.length === 2 && playerScore === 21) {
-                p.chips += Math.floor(p.bet * 2.5); // Blackjack pays 3:2 (return bet + 1.5 bet)
+            // Dealer busted, player wins
+            if (playerBJ) {
+                p.chips += Math.floor(p.bet * 2.5); // Blackjack pays 3:2
             } else {
-                p.chips += p.bet * 2; // Win pays 1:1 (return bet + bet)
+                p.chips += p.bet * 2; // Win pays 1:1
             }
-        } else if (playerScore > dealerScore) {
-            // Player wins
-            if (p.hand.length === 2 && playerScore === 21) {
-                p.chips += Math.floor(p.bet * 2.5);
-            } else {
-                p.chips += p.bet * 2;
-            }
-        } else if (playerScore === dealerScore) {
-            // Push (tie, return bet)
-            p.chips += p.bet;
         } else {
-            // Player loses (bet is gone)
+            // Neither busted
+            if (playerBJ && !dealerBJ) {
+                // Player Blackjack beats dealer regular 21
+                p.chips += Math.floor(p.bet * 2.5);
+            } else if (!playerBJ && dealerBJ) {
+                // Dealer Blackjack beats player regular 21
+            } else if (playerBJ && dealerBJ) {
+                // Both Blackjack: Push
+                p.chips += p.bet;
+            } else if (playerScore > dealerScore) {
+                // Player wins
+                p.chips += p.bet * 2;
+            } else if (playerScore === dealerScore) {
+                // Push (tie, return bet)
+                p.chips += p.bet;
+            } else {
+                // Player loses
+            }
         }
         
         p.bet = 0; // Clear bet
@@ -235,6 +285,7 @@ function resetRoomRound(room) {
         rooms.delete(room.code);
         return;
     }
+    clearTurnTimer(room);
     
     // If deck runs low (less than 40 cards), reshuffle new deck shoe
     if (room.deck.length < 40) {
@@ -406,12 +457,17 @@ wss.on('connection', (ws) => {
                             // Automatically stand/bust
                             nextPlayer(clientRoom);
                         } else {
-                            broadcastToRoom(clientRoom);
+                            startTurnTimer(clientRoom); // Reset 20s timer on hit
                         }
                     } else if (act === 'stand') {
                         clientPlayer.hasStood = true;
                         nextPlayer(clientRoom);
                     } else if (act === 'double') {
+                        // Double down allowed only on first 2 cards
+                        if (clientPlayer.hand.length !== 2) {
+                            ws.send(JSON.stringify({ type: 'error', message: 'Raddoppio consentito solo con le prime 2 carte!' }));
+                            break;
+                        }
                         // Double bet if chips are enough
                         if (clientPlayer.chips < clientPlayer.bet) {
                             ws.send(JSON.stringify({ type: 'error', message: 'Not enough chips to double!' }));
@@ -439,10 +495,12 @@ wss.on('connection', (ws) => {
             }
             
             if (clientRoom.players.length === 0) {
+                clearTurnTimer(clientRoom);
                 rooms.delete(clientRoom.code);
             } else {
                 // If it was the disconnected player's turn, pass to next
                 if (clientRoom.state === 'player_turn' && clientRoom.activeSeat === clientPlayer.seat) {
+                    clearTurnTimer(clientRoom);
                     nextPlayer(clientRoom);
                 } else {
                     broadcastToRoom(clientRoom);
@@ -481,22 +539,30 @@ function startDealing(room) {
                     // Second card to dealer
                     room.dealerHand.push(room.deck.pop());
                     
-                    // Determine first active player
-                    room.state = 'player_turn';
-                    // Find first player with a bet
-                    let firstPlayer = room.players.find(p => p.bet > 0);
-                    if (firstPlayer) {
-                        room.activeSeat = firstPlayer.seat;
-                        
-                        // Check if anyone got instant Blackjack!
-                        const pScore = calculateHandValue(firstPlayer.hand);
-                        if (pScore === 21) {
-                            nextPlayer(room);
-                        } else {
-                            broadcastToRoom(room);
-                        }
+                    // Check if dealer got Natural Blackjack on deal
+                    const dScore = calculateHandValue(room.dealerHand);
+                    const dealerBJ = dScore === 21;
+                    
+                    if (dealerBJ) {
+                        settleRound(room);
                     } else {
-                        dealerPlay(room);
+                        // Determine first active player
+                        room.state = 'player_turn';
+                        // Find first player with a bet
+                        let firstPlayer = room.players.find(p => p.bet > 0);
+                        if (firstPlayer) {
+                            room.activeSeat = firstPlayer.seat;
+                            
+                            // Check if anyone got instant Blackjack!
+                            const pScore = calculateHandValue(firstPlayer.hand);
+                            if (pScore === 21) {
+                                nextPlayer(room);
+                            } else {
+                                startTurnTimer(room);
+                            }
+                        } else {
+                            dealerPlay(room);
+                        }
                     }
                 }, 800);
             }, 800);

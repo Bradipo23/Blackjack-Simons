@@ -250,10 +250,11 @@ function updateStatusMessage(room) {
     } else if (room.state === 'player_turn') {
         const active = room.players.find(p => p.seat === room.activeSeat);
         if (active) {
+            const timerSuffix = room.timer !== undefined && room.timer !== null ? ` (${room.timer}s)` : '';
             if (active.id === myId) {
-                gameStatusMsg.innerText = 'È il tuo turno! Scegli la mossa.';
+                gameStatusMsg.innerText = `È il tuo turno! Scegli la mossa.${timerSuffix}`;
             } else {
-                gameStatusMsg.innerText = `Turno di ${active.name}...`;
+                gameStatusMsg.innerText = `Turno di ${active.name}...${timerSuffix}`;
             }
         }
     } else if (room.state === 'dealer_turn') {
@@ -338,6 +339,29 @@ function renderPlayerSlots(room) {
                 handLayout.appendChild(createCardElement(card));
             });
 
+            // Timer bar rendering
+            let timerContainer = cardEl.querySelector('.timer-container');
+            if (!timerContainer) {
+                timerContainer = document.createElement('div');
+                timerContainer.className = 'timer-container';
+                timerContainer.innerHTML = '<div class="timer-bar"></div>';
+                cardEl.appendChild(timerContainer);
+            }
+
+            if (room.state === 'player_turn' && room.activeSeat === s && room.timer !== undefined && room.timer !== null) {
+                timerContainer.style.display = 'block';
+                const timerBar = timerContainer.querySelector('.timer-bar');
+                const pct = (room.timer / 20) * 100;
+                timerBar.style.width = `${pct}%`;
+                if (room.timer <= 5) {
+                    timerBar.style.backgroundColor = '#ff4a4a';
+                } else {
+                    timerBar.style.backgroundColor = 'var(--gold)';
+                }
+            } else {
+                timerContainer.style.display = 'none';
+            }
+
             // Score Badge
             const scoreEl = cardEl.querySelector('.score-badge');
             if (p.hand.length > 0) {
@@ -361,9 +385,31 @@ function renderPlayerSlots(room) {
                 const pScore = p.score;
                 
                 if (pScore <= 21) {
-                    if (dScore > 21 || pScore > dScore) {
+                    const pBJ = p.hand.length === 2 && pScore === 21;
+                    const dBJ = room.dealerHand.length === 2 && dScore === 21;
+                    
+                    let won = false;
+                    let pushed = false;
+                    
+                    if (dScore > 21) {
+                        won = true;
+                    } else {
+                        if (pBJ && !dBJ) {
+                            won = true;
+                        } else if (!pBJ && dBJ) {
+                            won = false;
+                        } else if (pBJ && dBJ) {
+                            pushed = true;
+                        } else if (pScore > dScore) {
+                            won = true;
+                        } else if (pScore === dScore) {
+                            pushed = true;
+                        }
+                    }
+                    
+                    if (won) {
                         statusTag.style.display = 'block';
-                        if (p.hand.length === 2 && pScore === 21) {
+                        if (pBJ) {
                             statusTag.classList.add('blackjack');
                             statusTag.innerText = 'BLACKJACK';
                         } else {
@@ -375,7 +421,7 @@ function renderPlayerSlots(room) {
                             p.hand = []; // prevent repeat
                             playWinSound();
                         }
-                    } else if (pScore === dScore) {
+                    } else if (pushed) {
                         statusTag.style.display = 'block';
                         statusTag.classList.add('push');
                         statusTag.innerText = 'PATTA';
@@ -414,8 +460,8 @@ function updateControlsVisibility(room) {
     } else if (room.state === 'player_turn') {
         if (room.activeSeat === mySeat) {
             gameplayControls.style.display = 'flex';
-            // Disable double if player doesn't have enough chips
-            if (me.chips < me.bet) {
+            // Disable double if player doesn't have enough chips or has more than 2 cards
+            if (me.chips < me.bet || me.hand.length !== 2) {
                 btnDouble.disabled = true;
             } else {
                 btnDouble.disabled = false;

@@ -70,18 +70,19 @@ body, html {
     margin-bottom: 30px;
 }
 
-.chip-logo {
-    display: inline-block;
-    font-size: 3rem;
-    color: var(--gold);
-    text-shadow: 0 0 15px var(--gold-glow);
-    margin-bottom: 8px;
-    animation: rotateLogo 10s linear infinite;
+.lobby-logo-img {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 15px var(--gold-glow);
+    margin-bottom: 12px;
+    animation: bounceSlow 3s ease-in-out infinite;
 }
 
-@keyframes rotateLogo {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+@keyframes bounceSlow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
 }
 
 .logo-area h1 {
@@ -290,6 +291,10 @@ body, html {
     justify-content: space-between;
     padding: 30px 10px;
     overflow: hidden;
+    box-shadow: inset 0 0 100px rgba(0,0,0,0.85), inset 0 0 30px rgba(212, 175, 55, 0.15);
+    border: 10px solid #281702;
+    border-bottom: 20px solid #1a0e01;
+    border-radius: 20px;
 }
 
 .blackjack-table::after {
@@ -299,7 +304,7 @@ body, html {
     left: 5%;
     width: 90%;
     height: 80%;
-    border: 3px double rgba(212, 175, 55, 0.15);
+    border: 3px double rgba(212, 175, 55, 0.12);
     border-radius: 50% / 0% 0% 100% 100%;
     pointer-events: none;
     border-top: none;
@@ -336,16 +341,47 @@ body, html {
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
-    pointer-events: none;
+    pointer-events: auto;
     z-index: 2;
 }
 
-.felt-logo {
+.felt-logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.felt-logo-img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    border: 3px double rgba(212, 175, 55, 0.25);
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.15);
+    opacity: 0.25;
+    transition: opacity 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
+    object-fit: cover;
+}
+
+.table-center:hover .felt-logo-img {
+    opacity: 0.55;
+    border-color: rgba(212, 175, 55, 0.6);
+    box-shadow: 0 0 35px rgba(212, 175, 55, 0.45);
+}
+
+.felt-logo-text {
     font-family: 'Playfair Display', serif;
-    font-size: 3rem;
-    font-style: italic;
-    color: rgba(255, 255, 255, 0.05);
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: rgba(212, 175, 55, 0.25);
+    margin-top: 10px;
+    text-transform: uppercase;
     letter-spacing: 2px;
+    transition: color 0.5s ease;
+}
+
+.table-center:hover .felt-logo-text {
+    color: rgba(212, 175, 55, 0.55);
 }
 
 .deck-shoe {
@@ -419,6 +455,26 @@ body, html {
     box-shadow: 0 10px 40px rgba(212, 175, 55, 0.2);
 }
 
+.timer-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom-left-radius: 15px;
+    border-bottom-right-radius: 15px;
+    overflow: hidden;
+    display: none;
+}
+
+.timer-bar {
+    height: 100%;
+    width: 100%;
+    background: var(--gold);
+    transition: width 1s linear, background-color 0.3s ease;
+}
+
 .player-name {
     font-weight: 600;
     font-size: 0.95rem;
@@ -463,6 +519,14 @@ body, html {
     backface-visibility: hidden;
     animation: deal-card 0.4s ease-out forwards, flip-card 0.3s ease-out forwards;
     transform-origin: center center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-12px) rotate(3deg) scale(1.08) !important;
+    box-shadow: 0 10px 25px rgba(212, 175, 55, 0.4);
+    z-index: 100;
+    cursor: pointer;
 }
 
 .card:first-child {
